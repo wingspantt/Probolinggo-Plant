@@ -1,0 +1,2786 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Neutura — Probolinggo Plant</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@400;600;700;800&family=Barlow+Condensed:wght@600;700;800&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<!-- Supabase JS client (UMD build) -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
+<style>
+:root{--bg:#0f1115;--surface:#181b21;--surface2:#1f2329;--border:#2a2f38;--accent:#e8a838;--accent2:#3ecf8e;--accent3:#e05c3a;--accent4:#5b8dee;--text:#ecedf0;--muted:#6b7280;--font-head:'Syne',sans-serif;--font-mono:'DM Mono',monospace;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--font-mono);min-height:100vh;font-size:14px;}
+#sidebar{position:fixed;left:0;top:0;bottom:0;width:226px;background:var(--surface);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;overflow-y:auto;}
+.sidebar-brand{padding:20px 18px 16px;border-bottom:1px solid var(--border);}
+.sidebar-brand .logo{font-family:var(--font-head);font-weight:800;font-size:19px;color:var(--accent);letter-spacing:-0.5px;}
+.sidebar-brand .plant{font-size:11px;color:var(--accent4);margin-top:1px;font-weight:500;}
+.sidebar-brand .sub{font-size:9px;color:var(--muted);margin-top:2px;letter-spacing:1.4px;text-transform:uppercase;}
+.nav-section{padding:14px 16px 5px;font-size:9px;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 12px;margin:2px 7px;border-radius:7px;cursor:pointer;color:var(--muted);font-size:12px;transition:all 0.13s;border:none;background:none;width:calc(100% - 14px);font-family:var(--font-mono);text-align:left;}
+.nav-item:hover{background:var(--surface2);color:var(--text);}
+.nav-item.active{background:rgba(232,168,56,0.13);color:var(--accent);}
+.nav-icon{width:14px;height:14px;flex-shrink:0;}
+.sidebar-footer{margin-top:auto;padding:12px 9px;border-top:1px solid var(--border);display:flex;flex-direction:column;gap:5px;}
+#main{margin-left:226px;min-height:100vh;padding:28px 32px;}
+.page{display:none;}.page.active{display:block;}
+.page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:26px;padding-bottom:16px;border-bottom:1px solid var(--border);}
+.page-title{font-family:var(--font-head);font-weight:800;font-size:25px;color:var(--text);letter-spacing:-0.5px;}
+.page-subtitle{color:var(--muted);font-size:11px;margin-top:3px;}
+.header-actions{display:flex;gap:7px;align-items:center;flex-wrap:wrap;}
+.btn{padding:7px 13px;border-radius:7px;border:none;cursor:pointer;font-family:var(--font-mono);font-size:11.5px;font-weight:500;display:inline-flex;align-items:center;gap:5px;transition:all 0.13s;}
+.btn-primary{background:var(--accent);color:#0f1115;}.btn-primary:hover{background:#f0b84a;}
+.btn-ghost{background:var(--surface2);color:var(--text);border:1px solid var(--border);}.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-danger{background:rgba(224,92,58,0.12);color:var(--accent3);border:1px solid rgba(224,92,58,0.26);}.btn-danger:hover{background:rgba(224,92,58,0.22);}
+.btn-edit{background:rgba(91,141,238,0.12);color:var(--accent4);border:1px solid rgba(91,141,238,0.26);}.btn-edit:hover{background:rgba(91,141,238,0.22);}
+.btn-sm{padding:3px 8px;font-size:10.5px;}
+.stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:13px;margin-bottom:24px;}
+.stat-card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:16px;position:relative;overflow:hidden;transition:border-color 0.18s;}
+.stat-card:hover{border-color:var(--accent);}
+.stat-label{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:7px;}
+.stat-value{font-family:'Barlow Condensed',var(--font-head);font-size:28px;font-weight:700;line-height:1;color:var(--text);letter-spacing:0.5px;}
+.stat-unit{font-size:11px;color:var(--muted);margin-left:3px;font-family:var(--font-mono);}
+.stat-sub{font-size:10px;color:var(--muted);margin-top:4px;}
+.stat-bar{position:absolute;top:0;right:0;width:4px;height:100%;border-radius:0 11px 11px 0;}
+.c-amber .stat-bar{background:var(--accent);}.c-blue .stat-bar{background:var(--accent4);}
+.c-green .stat-bar{background:var(--accent2);}.c-red .stat-bar{background:var(--accent3);}
+.c-gray .stat-bar{background:var(--muted);}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:20px;margin-bottom:20px;}
+.card-title{font-family:var(--font-head);font-weight:700;font-size:14px;margin-bottom:14px;color:var(--text);display:flex;align-items:center;gap:6px;}
+.dot{width:7px;height:7px;border-radius:50%;flex-shrink:0;}
+.dot-amber{background:var(--accent);}.dot-blue{background:var(--accent4);}.dot-green{background:var(--accent2);}.dot-red{background:var(--accent3);}
+.prod-tab-bar,.tab-bar{display:flex;gap:3px;background:var(--surface2);border-radius:9px;padding:3px;width:fit-content;border:1px solid var(--border);}
+.prod-tab,.tab{padding:6px 15px;border-radius:6px;border:none;cursor:pointer;font-family:var(--font-mono);font-size:11.5px;color:var(--muted);background:none;transition:all 0.13s;}
+.prod-tab.active,.tab.active{background:var(--accent);color:#0f1115;font-weight:500;}
+.prod-tab:hover:not(.active),.tab:hover:not(.active){color:var(--text);}
+.table-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+th{text-align:left;padding:8px 11px;font-size:9.5px;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);white-space:nowrap;}
+td{padding:9px 11px;border-bottom:1px solid rgba(42,47,56,0.45);font-size:12px;vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(31,35,41,0.5);}
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;}
+.badge-amber{background:rgba(232,168,56,0.13);color:var(--accent);border:1px solid rgba(232,168,56,0.26);}
+.badge-blue{background:rgba(91,141,238,0.13);color:var(--accent4);border:1px solid rgba(91,141,238,0.26);}
+.badge-green{background:rgba(62,207,142,0.13);color:var(--accent2);border:1px solid rgba(62,207,142,0.26);}
+.badge-red{background:rgba(224,92,58,0.13);color:var(--accent3);border:1px solid rgba(224,92,58,0.26);}
+.badge-gray{background:rgba(107,114,128,0.13);color:var(--muted);border:1px solid rgba(107,114,128,0.26);}
+.temp-hot{color:var(--accent2);font-weight:500;}
+.temp-warm{color:var(--accent);}
+.temp-low{color:var(--muted);}
+.residence-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(62,207,142,0.1);border:1px solid rgba(62,207,142,0.3);border-radius:6px;padding:3px 10px;font-size:12px;color:var(--accent2);font-weight:500;}
+.form-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(185px,1fr));gap:12px;}
+.form-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.form-full{grid-column:1/-1;}
+.form-group{display:flex;flex-direction:column;gap:4px;}
+.form-group label{font-size:9.5px;color:var(--muted);letter-spacing:0.7px;text-transform:uppercase;}
+.form-group input,.form-group select,.form-group textarea{background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:7px 10px;color:var(--text);font-family:var(--font-mono);font-size:12.5px;outline:none;transition:border-color 0.13s;}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{border-color:var(--accent);}
+.form-group input[readonly]{opacity:0.55;cursor:not-allowed;}
+.form-group select option{background:var(--surface2);}
+.form-group textarea{resize:vertical;min-height:58px;}
+.form-section{margin-top:14px;padding-top:12px;border-top:1px solid var(--border);}
+.form-section-title{font-size:9.5px;letter-spacing:1.1px;text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+.temp-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;}
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);z-index:200;display:none;align-items:center;justify-content:center;padding:14px;}
+.modal-overlay.open{display:flex;}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:15px;padding:24px;width:100%;max-width:660px;max-height:93vh;overflow-y:auto;}
+.modal-wide{max-width:820px;}
+.modal-title{font-family:var(--font-head);font-weight:700;font-size:18px;margin-bottom:16px;color:var(--text);}
+.modal-actions{display:flex;gap:7px;justify-content:flex-end;margin-top:16px;}
+.inv-item{display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid var(--border);}
+.inv-item:last-child{border-bottom:none;}
+.inv-name{font-family:var(--font-head);font-weight:700;font-size:12px;width:110px;flex-shrink:0;}
+.inv-bar-wrap{flex:1;height:6px;background:var(--surface2);border-radius:3px;overflow:hidden;}
+.inv-bar{height:100%;border-radius:3px;transition:width 0.4s ease;min-width:2px;}
+.inv-qty{font-size:12px;min-width:95px;text-align:right;}
+.info-strip{display:flex;gap:9px;flex-wrap:wrap;margin-bottom:18px;}
+.info-pill{background:var(--surface2);border:1px solid var(--border);border-radius:18px;padding:3px 11px;font-size:10.5px;color:var(--muted);}
+.info-pill span{color:var(--accent);font-weight:500;}
+.empty-state{text-align:center;padding:36px 18px;color:var(--muted);}
+.empty-icon{font-size:28px;margin-bottom:8px;opacity:0.45;}
+.divider{height:1px;background:var(--border);margin:18px 0;}
+.action-btns{display:flex;gap:4px;}
+#toast{position:fixed;bottom:20px;right:20px;background:var(--surface2);border:1px solid var(--border);border-radius:9px;padding:10px 15px;font-size:12px;color:var(--text);z-index:999;opacity:0;transform:translateY(7px);transition:all 0.2s;pointer-events:none;max-width:270px;}
+#toast.show{opacity:1;transform:translateY(0);}
+#toast.ok{border-color:var(--accent2);color:var(--accent2);}
+#toast.err{border-color:var(--accent3);color:var(--accent3);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:3px;}
+
+/* Auth screen */
+#auth-screen{position:fixed;inset:0;background:rgba(0,0,0,0.72);backdrop-filter:blur(4px);z-index:1000;display:flex;align-items:center;justify-content:center;padding:18px;}
+#auth-card{background:var(--surface);border:1px solid var(--border);border-radius:15px;padding:22px;max-width:460px;width:100%;}
+#auth-title{font-family:var(--font-head);font-weight:800;font-size:20px;margin-bottom:14px;}
+#auth-sub{color:var(--muted);font-size:12px;margin-bottom:16px;line-height:1.35;}
+#auth-row{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;margin-top:14px;}
+#auth-spinner{display:none;font-size:12px;color:var(--muted);margin-top:10px;}
+
+/* Data loading overlay (used while fetching from Supabase) */
+#data-loading{position:fixed;inset:0;background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);z-index:9999;align-items:center;justify-content:center;}
+#data-loading-card{background:var(--surface);border:1px solid var(--border);border-radius:15px;padding:16px 20px;color:var(--text);font-size:12px;box-shadow:0 10px 28px rgba(0,0,0,0.35);}
+</style>
+</head>
+<body>
+
+<div id="auth-screen">
+  <div id="auth-card">
+    <div id="auth-title">Neutura Sign In</div>
+    <div id="auth-sub">Use your email/password to access the shared production database.</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Email</label><input type="email" id="auth-email" placeholder="you@example.com" autocomplete="username"/></div>
+      <div class="form-group"><label>Password</label><input type="password" id="auth-password" placeholder="••••••••" autocomplete="current-password"/></div>
+    </div>
+    <div id="auth-row">
+      <button class="btn btn-ghost" onclick="signUp()">Create account</button>
+      <button class="btn btn-primary" onclick="signIn()">Sign in</button>
+    </div>
+    <div id="auth-spinner">Connecting to Supabase...</div>
+    <div style="margin-top:12px;color:var(--muted);font-size:11px;line-height:1.35;">
+      If sign-in fails, make sure the Supabase project has <code>Email</code> provider enabled in Auth settings.
+    </div>
+  </div>
+</div>
+
+<div id="data-loading" aria-hidden="true" style="display:none;">
+  <div id="data-loading-card">Loading data...</div>
+</div>
+
+
+<div id="sidebar">
+  <div class="sidebar-brand">
+    <div class="logo">Neutura</div>
+    <div class="plant">Probolinggo Plant</div>
+    <div class="sub">Production System</div>
+  </div>
+  <div class="nav-section">Main</div>
+  <button class="nav-item active" onclick="nav('dashboard')">
+    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>
+    Dashboard
+  </button>
+  <button class="nav-item" onclick="nav('production')">
+    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2"/></svg>
+    Production Log
+  </button>
+  <button class="nav-item" onclick="nav('temperature')">
+    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M14 14.76V3.5a2.5 2.5 0 00-5 0v11.26a4.5 4.5 0 105 0z"/></svg>
+    Temperature Monitor
+  </button>
+  <div class="nav-section">Inventory</div>
+  <button class="nav-item" onclick="nav('finished')">
+    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/></svg>
+    Finished Goods
+  </button>
+  <button class="nav-item" onclick="nav('rawmat')">
+    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4"/></svg>
+    Raw Materials
+  </button>
+  <button class="nav-item" onclick="nav('packaging')">
+    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+    Packaging (Sacks)
+  </button>
+  <div class="nav-section">Shipments</div>
+  <button class="nav-item" onclick="nav('inward')">
+    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M3 16v-1a4 4 0 014-4h14M17 11l4 4-4 4"/></svg>
+    Inward (Raw Materials)
+  </button>
+  <button class="nav-item" onclick="nav('outward')">
+    <svg class="nav-icon" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path d="M21 16v-1a4 4 0 00-4-4H3M7 11L3 15l4 4"/></svg>
+    Outward (Sales)
+  </button>
+  <div class="sidebar-footer">
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:11px;" onclick="openModal('settings')">&#9881; Settings</button>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:11px;" onclick="exportPDF()">&#x2193; Export PDF</button>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:11px;" onclick="exportJSON()">&#x2193; Backup Data</button>
+    <button class="btn btn-ghost" style="width:100%;justify-content:center;font-size:11px;" onclick="document.getElementById('importFile').click()">&#x2191; Restore Backup</button>
+    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)"/>
+  </div>
+</div>
+
+<div id="main">
+
+<!-- DASHBOARD -->
+<div class="page active" id="page-dashboard">
+  <div class="page-header">
+    <div>
+      <div class="page-title">Dashboard</div>
+      <div class="page-subtitle" id="dash-date"></div>
+    </div>
+    <div class="header-actions">
+      <div class="tab-bar" id="dash-period-bar">
+        <button class="tab active" onclick="setDashPeriod('daily',this)">Daily</button>
+        <button class="tab" onclick="setDashPeriod('weekly',this)">Weekly</button>
+        <button class="tab" onclick="setDashPeriod('monthly',this)">Monthly</button>
+        <button class="tab" onclick="setDashPeriod('yearly',this)">Yearly</button>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;">
+        <span style="font-size:10px;color:var(--muted);letter-spacing:0.8px;text-transform:uppercase;">View</span>
+        <input type="date" id="dash-anchor-input" onchange="setDashAnchor(this.value)"
+          style="background:var(--surface2);border:1px solid var(--border);border-radius:7px;padding:5px 9px;color:var(--text);font-family:var(--font-mono);font-size:11px;outline:none;cursor:pointer;"
+          title="Pick any date — the chart will show the window ending on this date"/>
+        <button class="btn btn-ghost btn-sm" onclick="resetDashAnchor()" title="Back to today">Today</button>
+      </div>
+      <button class="btn btn-ghost" onclick="nav('production')">+ Log Production</button>
+    </div>
+  </div>
+  <div class="info-strip">
+    <div class="info-pill">Sawdust <span>Wood Veneer / Wood</span></div>
+    <div class="info-pill">Briquette <span>Wood Veneer / CPN Wood</span></div>
+    <div class="info-pill">Pyrolysis <span>350&#8211;450&#176;C &bull; 3h+</span></div>
+    <div class="info-pill">Outputs <span>Biochar + Bio Oil + Ash</span></div>
+  </div>
+  <div class="stats-grid" id="dash-stats"></div>
+
+  <!-- CHARTS ROW 1: Production + Temperature -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;">
+    <div class="card" style="min-height:260px;">
+      <div class="card-title"><span class="dot dot-amber"></span>Production Output</div>
+      <canvas id="chart-production" height="180"></canvas>
+    </div>
+    <div class="card" style="min-height:260px;">
+      <div class="card-title"><span class="dot dot-red"></span>Temperature (Peak per Session)</div>
+      <canvas id="chart-temperature" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- CHARTS ROW 2: Packaging + Stocks -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:18px;">
+    <div class="card" style="min-height:260px;">
+      <div class="card-title"><span class="dot dot-blue"></span>Packaged Sacks</div>
+      <canvas id="chart-packaging" height="180"></canvas>
+    </div>
+    <div class="card" style="min-height:260px;">
+      <div class="card-title"><span class="dot dot-green"></span>Current Stock Levels</div>
+      <canvas id="chart-stocks" height="180"></canvas>
+    </div>
+  </div>
+
+  <!-- BOTTOM: Recent + Inventory bars -->
+  <div style="display:grid;grid-template-columns:1.1fr 1fr;gap:18px;">
+    <div class="card">
+      <div class="card-title"><span class="dot dot-amber"></span>Recent Production</div>
+      <div class="table-wrap">
+        <table><thead><tr><th>Date</th><th>Type</th><th>Manufactured</th></tr></thead>
+        <tbody id="dash-recent"></tbody></table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><span class="dot dot-green"></span>Finished Goods</div>
+      <div id="dash-fg"></div>
+      <div class="divider"></div>
+      <div class="card-title"><span class="dot dot-blue"></span>Raw Materials</div>
+      <div id="dash-rm"></div>
+    </div>
+  </div>
+</div>
+
+<!-- PRODUCTION LOG -->
+<div class="page" id="page-production">
+  <div class="page-header">
+    <div><div class="page-title">Production Log</div><div class="page-subtitle">Detailed batch records</div></div>
+    <div class="header-actions">
+      <div class="tab-bar">
+        <button class="tab active" onclick="setPeriod('all',this)">All</button>
+        <button class="tab" onclick="setPeriod('today',this)">Today</button>
+        <button class="tab" onclick="setPeriod('week',this)">This Week</button>
+        <button class="tab" onclick="setPeriod('month',this)">This Month</button>
+      </div>
+    </div>
+  </div>
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:18px;">
+    <div class="prod-tab-bar">
+      <button class="prod-tab active" onclick="setProdTab('sawdust',this)">&#x1FAB5; Sawdust</button>
+      <button class="prod-tab" onclick="setProdTab('briquette',this)">&#x1F9F1; Briquette</button>
+      <button class="prod-tab" onclick="setProdTab('biochar',this)">&#x1F525; Biochar</button>
+    </div>
+    <div id="prod-add-btn"></div>
+  </div>
+  <div id="prod-sawdust">
+    <div class="card">
+      <div class="card-title"><span class="dot dot-blue"></span>Sawdust Production Records</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Main Ingredient</th><th>Ingr. Amount (kg)</th><th>Surplus (kg)</th><th>Total Used (kg)</th><th>Manufactured (kg)</th><th>Actions</th></tr></thead>
+        <tbody id="tbl-sawdust"></tbody>
+      </table></div>
+    </div>
+  </div>
+  <div id="prod-briquette" style="display:none">
+    <div class="card">
+      <div class="card-title"><span class="dot dot-amber"></span>Briquette Production Records</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Main Ingredient</th><th>Ingr. Amount (kg)</th><th>Surplus (kg)</th><th>Total Used (kg)</th><th>Manufactured (kg)</th><th>Actions</th></tr></thead>
+        <tbody id="tbl-briquette"></tbody>
+      </table></div>
+    </div>
+  </div>
+  <div id="prod-biochar" style="display:none">
+    <div class="card">
+      <div class="card-title"><span class="dot dot-green"></span>Biochar Production Records</div>
+      <div class="table-wrap"><table>
+        <thead><tr><th>Date</th><th>Reactor</th><th>1st Ingr.</th><th>1st (kg)</th><th>2nd Ingr.</th><th>2nd (kg)</th><th>Total Ingr.(kg)</th><th>WV Fuel</th><th>WP Fuel</th><th>Wood Fuel</th><th>Ash (kg)</th><th>Biochar (kg)</th><th>Bio Oil (L)</th><th>Actions</th></tr></thead>
+        <tbody id="tbl-biochar"></tbody>
+      </table></div>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPERATURE MONITORING -->
+<div class="page" id="page-temperature">
+  <div class="page-header">
+    <div><div class="page-title">Temperature Monitoring</div><div class="page-subtitle">Pyrolysis reactor temperature log &bull; 30-min intervals &bull; Residence time above 350&#176;C</div></div>
+    <div class="header-actions">
+      <div class="tab-bar">
+        <button class="tab active" onclick="setTempFilter('all',this)">All</button>
+        <button class="tab" onclick="setTempFilter('r1',this)">Reactor 1</button>
+        <button class="tab" onclick="setTempFilter('r2',this)">Reactor 2</button>
+      </div>
+      <button class="btn btn-primary" onclick="openTempModal()">+ New Session</button>
+    </div>
+  </div>
+  <div class="stats-grid" id="temp-stats"></div>
+  <div class="card">
+    <div class="card-title"><span class="dot dot-red"></span>Session Records</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Reactor</th><th>Start Temp</th><th>Peak Temp</th><th>Intervals &#8805;350&#176;C</th><th>Residence Time</th><th>Actions</th></tr></thead>
+      <tbody id="tbl-temperature"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- FINISHED GOODS -->
+<div class="page" id="page-finished">
+  <div class="page-header">
+    <div><div class="page-title">Finished Goods</div><div class="page-subtitle">Stock of manufactured products</div></div>
+    <button class="btn btn-primary" onclick="openModal('adjFG')">+ Adjust Stock</button>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot dot-green"></span>Current Stock</div>
+    <div id="fg-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot dot-amber"></span>Adjustment History</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Product</th><th>Type</th><th>Change</th><th>Source</th><th>Notes</th></tr></thead>
+      <tbody id="fg-history"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- RAW MATERIALS -->
+<div class="page" id="page-rawmat">
+  <div class="page-header">
+    <div><div class="page-title">Raw Materials</div><div class="page-subtitle">Stock of input materials</div></div>
+    <button class="btn btn-primary" onclick="openModal('adjRM')">+ Adjust Stock</button>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot dot-blue"></span>Current Stock</div>
+    <div id="rm-list"></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot dot-amber"></span>Adjustment History</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Material</th><th>Type</th><th>Change</th><th>Source</th><th>Notes</th></tr></thead>
+      <tbody id="rm-history"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- PACKAGING -->
+<div class="page" id="page-packaging">
+  <div class="page-header">
+    <div><div class="page-title">Packaging (Sacks)</div><div class="page-subtitle">Sack &amp; Inner Sack stock &bull; Packaging batches &bull; Net weight tracking</div></div>
+    <div class="header-actions">
+      <button class="btn btn-ghost" onclick="openModal('sackadj')">Adjust Sack Stock</button>
+      <button class="btn btn-primary" onclick="openPkgModal()">+ New Packaging Batch</button>
+    </div>
+  </div>
+  <div class="stats-grid" id="pkg-stats"></div>
+  <div class="card">
+    <div class="card-title"><span class="dot dot-amber"></span>Packaging Batches</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Net Weight/Sack</th><th>No. of Sacks</th><th>Total Weight</th><th>Notes</th><th>Actions</th></tr></thead>
+      <tbody id="pkg-table"></tbody>
+    </table></div>
+  </div>
+  <div class="card">
+    <div class="card-title"><span class="dot dot-blue"></span>Sack Stock History</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Type</th><th>Sack Change</th><th>Inner Sack Change</th><th>Source</th><th>Notes</th></tr></thead>
+      <tbody id="sack-history"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- INWARD -->
+<div class="page" id="page-inward">
+  <div class="page-header">
+    <div><div class="page-title">Inward Shipments</div><div class="page-subtitle">Raw materials received</div></div>
+    <button class="btn btn-primary" onclick="openModal('inward')">+ Record Receipt</button>
+  </div>
+  <div class="stats-grid" id="inward-stats"></div>
+  <div class="card">
+    <div class="card-title"><span class="dot dot-blue"></span>Shipment Records</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Material</th><th>Quantity (kg)</th><th>Supplier</th><th>Notes</th><th></th></tr></thead>
+      <tbody id="inward-table"></tbody>
+    </table></div>
+  </div>
+</div>
+
+<!-- OUTWARD -->
+<div class="page" id="page-outward">
+  <div class="page-header">
+    <div><div class="page-title">Outward Shipments</div><div class="page-subtitle">Products sold / dispatched</div></div>
+    <button class="btn btn-primary" onclick="openModal('outward')">+ Record Sale</button>
+  </div>
+  <div class="stats-grid" id="outward-stats"></div>
+  <div class="card">
+    <div class="card-title"><span class="dot dot-red"></span>Sales Records</div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>Date</th><th>Product</th><th>Quantity (kg)</th><th>Buyer</th><th>Notes</th><th></th></tr></thead>
+      <tbody id="outward-table"></tbody>
+    </table></div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<!-- ============ MODALS ============ -->
+
+<!-- SAWDUST MODAL -->
+<div class="modal-overlay" id="modal-sawdust">
+<div class="modal">
+  <div class="modal-title" id="sd-modal-title">&#x1FAB5; Log Sawdust Batch</div>
+  <div class="form-grid">
+    <div class="form-group"><label>Date</label><input type="date" id="sd-date"/></div>
+    <div class="form-group"><label>Main Ingredient</label>
+      <select id="sd-ingr"><option value="Wood Veneer">Wood Veneer</option><option value="Wood">Wood</option></select>
+    </div>
+    <div class="form-group"><label>Ingredient Amount (kg)</label><input type="number" id="sd-amount" min="0" step="0.01" placeholder="Total brought in" oninput="calcSD()"/></div>
+    <div class="form-group"><label>Ingredient Surplus (kg)</label><input type="number" id="sd-surplus" min="0" step="0.01" placeholder="Leftover unused" oninput="calcSD()"/></div>
+    <div class="form-group"><label>Total Used (kg) — auto</label><input type="number" id="sd-used" readonly/></div>
+    <div class="form-group"><label>Total Manufactured (kg)</label><input type="number" id="sd-mfg" min="0" step="0.01" placeholder="Output amount"/></div>
+  </div>
+  <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="sd-notes"></textarea></div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('sawdust')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveSawdust()">Save Batch</button>
+  </div>
+</div></div>
+
+<!-- BRIQUETTE MODAL -->
+<div class="modal-overlay" id="modal-briquette">
+<div class="modal">
+  <div class="modal-title" id="br-modal-title">&#x1F9F1; Log Briquette Batch</div>
+  <div class="form-grid">
+    <div class="form-group"><label>Date</label><input type="date" id="br-date"/></div>
+    <div class="form-group"><label>Main Ingredient</label>
+      <select id="br-ingr"><option value="Wood Veneer">Wood Veneer</option><option value="CPN Wood">CPN Wood</option></select>
+    </div>
+    <div class="form-group"><label>Ingredient Amount (kg)</label><input type="number" id="br-amount" min="0" step="0.01" placeholder="Total brought in" oninput="calcBR()"/></div>
+    <div class="form-group"><label>Ingredient Surplus (kg)</label><input type="number" id="br-surplus" min="0" step="0.01" placeholder="Leftover unused" oninput="calcBR()"/></div>
+    <div class="form-group"><label>Total Used (kg) — auto</label><input type="number" id="br-used" readonly/></div>
+    <div class="form-group"><label>Total Manufactured (kg)</label><input type="number" id="br-mfg" min="0" step="0.01" placeholder="Output amount"/></div>
+  </div>
+  <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="br-notes"></textarea></div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('briquette')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveBriquette()">Save Batch</button>
+  </div>
+</div></div>
+
+<!-- BIOCHAR MODAL -->
+<div class="modal-overlay" id="modal-biochar">
+<div class="modal modal-wide">
+  <div class="modal-title" id="bc-modal-title">&#x1F525; Log Biochar Batch</div>
+  <div class="form-grid">
+    <div class="form-group"><label>Date</label><input type="date" id="bc-date"/></div>
+    <div class="form-group"><label>Reactor</label>
+      <select id="bc-reactor"><option value="Reactor 1">Reactor 1</option><option value="Reactor 2">Reactor 2</option></select>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-title">Main Ingredients</div>
+    <div class="form-grid">
+      <div class="form-group"><label>1st Main Ingredient</label>
+        <select id="bc-ingr1"><option value="Briquette">Briquette</option><option value="Sengon Wood">Sengon Wood</option><option value="Wood Pellet">Wood Pellet</option><option value="Wood Veneer">Wood Veneer</option><option value="Logs">Logs</option></select>
+      </div>
+      <div class="form-group"><label>1st Amount (kg)</label><input type="number" id="bc-qty1" min="0" step="0.01" placeholder="0" oninput="calcBC()"/></div>
+      <div class="form-group"><label>2nd Main Ingredient</label>
+        <select id="bc-ingr2"><option value="">— None —</option><option value="Briquette">Briquette</option><option value="Sengon Wood">Sengon Wood</option><option value="Wood Pellet">Wood Pellet</option><option value="Wood Veneer">Wood Veneer</option><option value="Logs">Logs</option></select>
+      </div>
+      <div class="form-group"><label>2nd Amount (kg)</label><input type="number" id="bc-qty2" min="0" step="0.01" placeholder="0" oninput="calcBC()"/></div>
+      <div class="form-group"><label>Total Ingredient (kg) — auto</label><input type="number" id="bc-total-ingr" readonly/></div>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-title">Fuel Used During Pyrolysis</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Wood Veneer Fuel (kg)</label><input type="number" id="bc-fuel-wv" min="0" step="0.01" placeholder="0"/></div>
+      <div class="form-group"><label>Wood Pellet Fuel (kg)</label><input type="number" id="bc-fuel-wp" min="0" step="0.01" placeholder="0"/></div>
+      <div class="form-group"><label>Wood Fuel (kg)</label><input type="number" id="bc-fuel-w" min="0" step="0.01" placeholder="0"/></div>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-title">Outputs</div>
+    <div class="form-grid">
+      <div class="form-group"><label>Ash Remnant (kg)</label><input type="number" id="bc-ash" min="0" step="0.01" placeholder="0"/></div>
+      <div class="form-group"><label>Total Biochar Manufactured (kg)</label><input type="number" id="bc-biochar" min="0" step="0.01" placeholder="0"/></div>
+      <div class="form-group"><label>Total Bio Oil Manufactured (L)</label><input type="number" id="bc-biooil" min="0" step="0.01" placeholder="0"/></div>
+    </div>
+  </div>
+  <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="bc-notes"></textarea></div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('biochar')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveBiochar()">Save Batch</button>
+  </div>
+</div></div>
+
+<!-- TEMPERATURE MODAL -->
+<div class="modal-overlay" id="modal-temperature">
+<div class="modal modal-wide">
+  <div class="modal-title" id="tm-modal-title">&#x1F321; Log Temperature Session</div>
+  <div class="form-grid">
+    <div class="form-group"><label>Date</label><input type="date" id="tm-date"/></div>
+    <div class="form-group"><label>Reactor</label>
+      <select id="tm-reactor"><option value="Reactor 1">Reactor 1</option><option value="Reactor 2">Reactor 2</option></select>
+    </div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-title">Temperature Readings (&#176;C) — mark every 30-minute interval</div>
+    <div class="temp-grid" id="temp-inputs-grid"></div>
+  </div>
+  <div class="form-section">
+    <div class="form-section-title">Residence Time (auto-calculated)</div>
+    <div style="display:flex;align-items:center;gap:16px;padding:10px 0;">
+      <div style="font-family:var(--font-head);font-size:36px;font-weight:800;color:var(--accent2);" id="tm-rt-display">0.0 h</div>
+      <div>
+        <div style="font-size:12px;color:var(--muted);">Total time holding temperature at or above 350&#176;C</div>
+        <div style="font-size:11px;color:var(--muted);margin-top:3px;">Each 30-min interval at &#8805;350&#176;C = 0.5 hours counted</div>
+      </div>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('temperature')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveTemperature()">Save Session</button>
+  </div>
+</div></div>
+
+<!-- PACKAGING MODAL -->
+<div class="modal-overlay" id="modal-packaging">
+<div class="modal">
+  <div class="modal-title" id="pk-modal-title">New Packaging Batch</div>
+  <div class="form-grid">
+    <div class="form-group"><label>Date</label><input type="date" id="pk-date"/></div>
+    <div class="form-group"><label>Net Weight per Sack (kg)</label><input type="number" id="pk-netweight" min="0" step="0.01" placeholder="e.g. 18" oninput="calcPkg()"/></div>
+    <div class="form-group"><label>Number of Sacks Packaged</label><input type="number" id="pk-count" min="0" step="1" placeholder="e.g. 54" oninput="calcPkg()"/></div>
+    <div class="form-group"><label>Total Weight (kg) — auto</label><input type="number" id="pk-total" readonly placeholder="auto"/></div>
+  </div>
+  <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="pk-notes"></textarea></div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('packaging')">Cancel</button>
+    <button class="btn btn-primary" onclick="savePackaging()">Save Batch</button>
+  </div>
+</div></div>
+
+<!-- SACK STOCK ADJUST MODAL -->
+<div class="modal-overlay" id="modal-sackadj">
+<div class="modal">
+  <div class="modal-title">Adjust Sack Stock</div>
+  <div class="form-grid">
+    <div class="form-group"><label>Date</label><input type="date" id="sa-date"/></div>
+    <div class="form-group"><label>Stock Type</label>
+      <select id="sa-type"><option value="sack">Sack</option><option value="innerSack">Inner Sack</option></select>
+    </div>
+    <div class="form-group"><label>Adjustment</label>
+      <select id="sa-adj"><option value="add">Add</option><option value="remove">Remove</option><option value="set">Set Exact</option></select>
+    </div>
+    <div class="form-group"><label>Quantity (pcs)</label><input type="number" id="sa-qty" min="0" step="1"/></div>
+  </div>
+  <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="sa-notes" placeholder="Reason for adjustment..."></textarea></div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('sackadj')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveSackAdj()">Save</button>
+  </div>
+</div></div>
+
+<!-- FINISHED GOODS ADJUST -->
+<div class="modal-overlay" id="modal-adjFG">
+<div class="modal">
+  <div class="modal-title">Adjust Finished Goods Stock</div>
+  <div class="form-grid">
+    <div class="form-group"><label>Date</label><input type="date" id="afg-date"/></div>
+    <div class="form-group"><label>Product</label>
+      <select id="afg-product"><option value="Sawdust">Sawdust</option><option value="Briquette">Briquette</option><option value="Biochar">Biochar</option><option value="Bio Oil">Bio Oil</option><option value="Ash">Ash</option></select>
+    </div>
+    <div class="form-group"><label>Adjustment</label>
+      <select id="afg-type"><option value="add">Add</option><option value="remove">Remove</option><option value="set">Set Exact</option></select>
+    </div>
+    <div class="form-group"><label>Quantity</label><input type="number" id="afg-qty" min="0" step="0.01"/></div>
+    <div class="form-group"><label>Unit</label>
+      <select id="afg-unit"><option value="kg">kg</option><option value="liter">liter</option><option value="ton">ton</option></select>
+    </div>
+  </div>
+  <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="afg-notes"></textarea></div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('adjFG')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveAdjFG()">Save</button>
+  </div>
+</div></div>
+
+<!-- RAW MATERIALS ADJUST -->
+<div class="modal-overlay" id="modal-adjRM">
+<div class="modal">
+  <div class="modal-title">Adjust Raw Material Stock</div>
+  <div class="form-grid">
+    <div class="form-group"><label>Date</label><input type="date" id="arm-date"/></div>
+    <div class="form-group"><label>Material</label>
+      <select id="arm-material"><option value="Wood Veneer">Wood Veneer</option><option value="Wood">Wood</option><option value="CPN Wood">CPN Wood</option><option value="Sengon Wood">Sengon Wood</option><option value="Wood Pellet">Wood Pellet</option><option value="Logs">Logs</option></select>
+    </div>
+    <div class="form-group"><label>Adjustment</label>
+      <select id="arm-type"><option value="add">Add</option><option value="remove">Remove</option><option value="set">Set Exact</option></select>
+    </div>
+    <div class="form-group"><label>Quantity (kg)</label><input type="number" id="arm-qty" min="0" step="0.01"/></div>
+  </div>
+  <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="arm-notes"></textarea></div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('adjRM')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveAdjRM()">Save</button>
+  </div>
+</div></div>
+
+<!-- INWARD MODAL -->
+<div class="modal-overlay" id="modal-inward">
+<div class="modal">
+  <div class="modal-title">Record Inward Shipment</div>
+  <div class="form-grid">
+    <div class="form-group"><label>Date</label><input type="date" id="in-date"/></div>
+    <div class="form-group"><label>Material</label>
+      <select id="in-material"><option value="Wood Veneer">Wood Veneer</option><option value="Wood Pellet">Wood Pellet</option><option value="Wood">Wood</option><option value="CPN Wood">CPN Wood</option><option value="Sengon Wood">Sengon Wood</option><option value="Logs">Logs</option></select>
+    </div>
+    <div class="form-group"><label>Quantity (kg)</label><input type="number" id="in-qty" min="0" step="0.01"/></div>
+    <div class="form-group"><label>Supplier</label><input type="text" id="in-supplier"/></div>
+  </div>
+  <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="in-notes"></textarea></div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('inward')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveInward()">Save</button>
+  </div>
+</div></div>
+
+<!-- OUTWARD MODAL -->
+<div class="modal-overlay" id="modal-outward">
+<div class="modal">
+  <div class="modal-title">Record Sale / Outward Shipment</div>
+  <div class="form-grid">
+    <div class="form-group"><label>Date</label><input type="date" id="out-date"/></div>
+    <div class="form-group"><label>Product</label>
+      <select id="out-product"><option value="Sawdust">Sawdust</option><option value="Briquette">Briquette</option><option value="Biochar">Biochar</option><option value="Bio Oil">Bio Oil</option><option value="Ash">Ash</option></select>
+    </div>
+    <div class="form-group"><label>Quantity (kg)</label><input type="number" id="out-qty" min="0" step="0.01"/></div>
+    <div class="form-group"><label>Buyer</label><input type="text" id="out-buyer"/></div>
+  </div>
+  <div class="form-group" style="margin-top:12px;"><label>Notes</label><textarea id="out-notes"></textarea></div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('outward')">Cancel</button>
+    <button class="btn btn-primary" onclick="saveOutward()">Save</button>
+  </div>
+</div></div>
+
+
+<!-- SETTINGS MODAL -->
+<div class="modal-overlay" id="modal-settings">
+<div class="modal" style="max-width:560px">
+  <div class="modal-title">&#9881; Settings</div>
+  <div class="form-section-title" style="margin-bottom:12px;">Clear Cache — deletes ALL records in the selected category from Supabase. This cannot be undone.</div>
+
+  <div style="display:flex;flex-direction:column;gap:8px;">
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Sawdust Production Log</div>
+        <div style="font-size:10px;color:var(--muted)">Clears all sawdust batch records + recalculates inventory</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="clearCategory('sawdust')">Clear</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Briquette Production Log</div>
+        <div style="font-size:10px;color:var(--muted)">Clears all briquette batch records + recalculates inventory</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="clearCategory('briquette')">Clear</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Biochar Production Log</div>
+        <div style="font-size:10px;color:var(--muted)">Clears all biochar batch records + recalculates inventory</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="clearCategory('biochar')">Clear</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Temperature Sessions</div>
+        <div style="font-size:10px;color:var(--muted)">Clears all temperature monitoring records</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="clearCategory('temperature')">Clear</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Packaging Batches</div>
+        <div style="font-size:10px;color:var(--muted)">Clears all packaging batch records</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="clearCategory('packaging')">Clear</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Inward Shipments</div>
+        <div style="font-size:10px;color:var(--muted)">Clears all inward shipment records</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="clearCategory('inward')">Clear</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Outward Shipments (Sales)</div>
+        <div style="font-size:10px;color:var(--muted)">Clears all sales records</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="clearCategory('outward')">Clear</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:var(--surface2);border-radius:8px;border:1px solid var(--border);">
+      <div>
+        <div style="font-size:13px;font-weight:500;color:var(--text)">Inventory History Logs</div>
+        <div style="font-size:10px;color:var(--muted)">Clears FG + RM history entries (does not reset stock levels)</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="clearCategory('invhistory')">Clear</button>
+    </div>
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 14px;background:rgba(224,92,58,0.08);border-radius:8px;border:1px solid rgba(224,92,58,0.3);margin-top:4px;">
+      <div>
+        <div style="font-size:13px;font-weight:700;color:var(--accent3)">&#9888; Reset Everything</div>
+        <div style="font-size:10px;color:var(--muted)">Deletes ALL data in ALL categories including inventory stock</div>
+      </div>
+      <button class="btn btn-danger btn-sm" onclick="clearCategory('all')">Reset ALL</button>
+    </div>
+  </div>
+  <div class="modal-actions">
+    <button class="btn btn-ghost" onclick="closeModal('settings')">Close</button>
+  </div>
+</div>
+</div>
+<div id="toast"></div>
+
+<script>
+// ========== CONSTANTS ==========
+const TEMP_LABELS = [
+  'Start (0 min)',
+  '0 - 30 min','30 - 60 min','60 - 90 min','90 - 120 min',
+  '120 - 150 min','150 - 180 min','180 - 210 min','210 - 240 min',
+  '240 - 270 min','270 - 300 min','300 - 330 min','330 - 360 min',
+  '360 - 390 min','390 - 420 min','420 - 450 min','450 - 480 min',
+  '480 - 510 min','510 - 540 min','540 - 570 min','570 - 600 min'
+];
+
+const FG_COLORS = {Sawdust:'#5b8dee',Briquette:'#e8a838',Biochar:'#3ecf8e','Bio Oil':'#e05c3a',Ash:'#6b7280'};
+const RM_COLORS = {'Wood Veneer':'#a78bfa',Wood:'#fb923c','CPN Wood':'#f472b6','Sengon Wood':'#34d399','Wood Pellet':'#60a5fa',Logs:'#fbbf24'};
+const FG_BADGE  = {Sawdust:'badge-blue',Briquette:'badge-amber',Biochar:'badge-green','Bio Oil':'badge-red',Ash:'badge-gray'};
+
+// ========== DATABASE ==========
+const SUPABASE_URL = 'https://laisfsziyfqesqdyepjr.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxhaXNmc3ppeWZxZXNxZHllcGpyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzM5MzY4OTMsImV4cCI6MjA4OTUxMjg5M30.-9j078eiol5CyGkrxcuUMJE1xyXBfyzpcGJJ4i6IH8Q';
+
+let supabaseClient = null;
+let session = null;
+
+// In-memory state used by your existing render code.
+// Populated from Supabase after login (and refreshed via realtime).
+const DB_KEY = null;
+
+function defaultDB() {
+  return {
+    prod:{sawdust:[],briquette:[],biochar:[]},
+    fg:{Sawdust:{qty:0,unit:'kg'},Briquette:{qty:0,unit:'kg'},Biochar:{qty:0,unit:'kg'},'Bio Oil':{qty:0,unit:'liter'},Ash:{qty:0,unit:'kg'}},
+    rm:{'Wood Veneer':{qty:0,unit:'kg'},Wood:{qty:0,unit:'kg'},'CPN Wood':{qty:0,unit:'kg'},'Sengon Wood':{qty:0,unit:'kg'},'Wood Pellet':{qty:0,unit:'kg'},Logs:{qty:0,unit:'kg'}},
+    sacks:{sack:{qty:0},innerSack:{qty:0}},
+    packaging:[],
+    temperature:[],
+    fgHistory:[],rmHistory:[],sackHistory:[],inward:[],outward:[]
+  };
+}
+
+let DB = defaultDB();
+
+function setAuthScreen(authed) {
+  const authEl = document.getElementById('auth-screen');
+  const sidebarEl = document.getElementById('sidebar');
+  const mainEl = document.getElementById('main');
+  if (!authEl || !sidebarEl || !mainEl) return;
+  authEl.style.display = authed ? 'none' : 'flex';
+  sidebarEl.style.display = authed ? 'flex' : 'none';
+  mainEl.style.display = authed ? 'block' : 'none';
+}
+
+function showAuthBusy(isBusy) {
+  const el = document.getElementById('auth-spinner');
+  if (!el) return;
+  el.style.display = isBusy ? 'block' : 'none';
+}
+
+function showDataBusy(isBusy) {
+  const el = document.getElementById('data-loading');
+  if (!el) return;
+  el.style.display = isBusy ? 'flex' : 'none';
+}
+
+function getActivePage() {
+  const active = document.querySelector('.page.active');
+  if (!active || !active.id) return 'dashboard';
+  return active.id.replace('page-', '');
+}
+
+// Re-render the currently visible view after fresh data loads.
+function rerenderCurrentPage() {
+  const page = getActivePage();
+  if (page === 'production') {
+    const activeBtn = document.querySelector('#page-production .prod-tab.active');
+    if (activeBtn) return setProdTab(prodTab, activeBtn);
+    return renderProd();
+  }
+  if (page === 'temperature') {
+    const activeBtn = document.querySelector('#page-temperature .tab.active');
+    if (activeBtn) return setTempFilter(tempFilter, activeBtn);
+    return renderTemp();
+  }
+  return render(page);
+}
+
+let refreshInFlight = false;
+let refreshQueued = false;
+let realtimeTimer = null;
+let realtimeChannel = null;
+
+async function refreshAll() {
+  if (!supabaseClient) return;
+  if (refreshInFlight) { refreshQueued = true; return; }
+  refreshInFlight = true;
+
+  let busyTimer = null;
+  let busyShown = false;
+  busyTimer = setTimeout(() => {
+    busyShown = true;
+    showDataBusy(true);
+  }, 250);
+
+  try {
+    // Stocks
+    const [
+      { data: fgStocks, error: fgErr },
+      { data: rmStocks, error: rmErr },
+      { data: sackStocks, error: sackErr },
+      // Logs
+      { data: sawdustRows, error: sawdustErr },
+      { data: briquetteRows, error: briquetteErr },
+      { data: biocharRows, error: biocharErr },
+      { data: tempRows, error: tempErr },
+      { data: packagingRows, error: packagingErr },
+      { data: sackHistRows, error: sackHistErr },
+      { data: fgHistRows, error: fgHistErr },
+      { data: rmHistRows, error: rmHistErr },
+      { data: inwardRows, error: inwardErr },
+      { data: outwardRows, error: outwardErr }
+    ] = await Promise.all([
+      supabaseClient.from('inventory_fg').select('*'),
+      supabaseClient.from('inventory_rm').select('*'),
+      supabaseClient.from('sacks').select('*'),
+      supabaseClient.from('prod_sawdust').select('*'),
+      supabaseClient.from('prod_briquette').select('*'),
+      supabaseClient.from('prod_biochar').select('*'),
+      supabaseClient.from('temperature_sessions').select('*'),
+      supabaseClient.from('packaging').select('*'),
+      supabaseClient.from('sack_history').select('*'),
+      supabaseClient.from('inventory_fg_history').select('*'),
+      supabaseClient.from('inventory_rm_history').select('*'),
+      supabaseClient.from('inward_shipments').select('*'),
+      supabaseClient.from('outward_shipments').select('*')
+    ]);
+
+    const allErr = fgErr || rmErr || sackErr || sawdustErr || briquetteErr || biocharErr || tempErr ||
+      packagingErr || sackHistErr || fgHistErr || rmHistErr || inwardErr || outwardErr;
+    if (allErr) throw allErr;
+
+    const next = defaultDB();
+
+    // Map stocks
+    (fgStocks || []).forEach(r => {
+      const p = r.product;
+      next.fg[p] = { qty: Number(r.qty || 0), unit: r.unit || next.fg[p]?.unit || 'kg' };
+    });
+    (rmStocks || []).forEach(r => {
+      const m = r.material;
+      next.rm[m] = { qty: Number(r.qty || 0), unit: r.unit || next.rm[m]?.unit || 'kg' };
+    });
+    (sackStocks || []).forEach(r => {
+      const t = r.type;
+      if (t === 'sack') next.sacks.sack.qty = Number(r.qty || 0);
+      if (t === 'innerSack') next.sacks.innerSack.qty = Number(r.qty || 0);
+    });
+
+    // Map production
+    (sawdustRows || []).forEach(r => next.prod.sawdust.push({
+      id: Number(r.id),
+      date: r.date,
+      ingr: r.ingr,
+      amount: Number(r.amount || 0),
+      surplus: Number(r.surplus || 0),
+      used: Number(r.used || 0),
+      mfg: Number(r.mfg || 0),
+      notes: r.notes || ''
+    }));
+    (briquetteRows || []).forEach(r => next.prod.briquette.push({
+      id: Number(r.id),
+      date: r.date,
+      ingr: r.ingr,
+      amount: Number(r.amount || 0),
+      surplus: Number(r.surplus || 0),
+      used: Number(r.used || 0),
+      mfg: Number(r.mfg || 0),
+      notes: r.notes || ''
+    }));
+    (biocharRows || []).forEach(r => next.prod.biochar.push({
+      id: Number(r.id),
+      date: r.date,
+      reactor: r.reactor,
+      ingr1: r.ingr1,
+      qty1: Number(r.qty1 || 0),
+      ingr2: r.ingr2 || '',
+      qty2: Number(r.qty2 || 0),
+      totalIngr: Number(r.total_ingr || 0),
+      fuelWV: Number(r.fuel_wv || 0),
+      fuelWP: Number(r.fuel_wp || 0),
+      fuelW: Number(r.fuel_w || 0),
+      ash: Number(r.ash || 0),
+      biochar: Number(r.biochar || 0),
+      biooil: Number(r.biooil || 0),
+      notes: r.notes || ''
+    }));
+
+    // Map temperature
+    (tempRows || []).forEach(r => next.temperature.push({
+      id: Number(r.id),
+      date: r.date,
+      reactor: r.reactor,
+      temps: (r.temps || []).map(v => (v === null ? null : Number(v))),
+      residenceTime: Number(r.residence_time || 0)
+    }));
+
+    // Packaging + sack history
+    (packagingRows || []).forEach(r => next.packaging.push({
+      id: Number(r.id),
+      date: r.date,
+      netWeight: Number(r.net_weight || 0),
+      count: Number(r.count || 0),
+      totalWeight: Number(r.total_weight || 0),
+      notes: r.notes || ''
+    }));
+    (sackHistRows || []).forEach(r => next.sackHistory.push({
+      id: Number(r.id),
+      date: r.date,
+      type: r.type,
+      sackDelta: Number(r.sack_delta || 0),
+      innerDelta: Number(r.inner_delta || 0),
+      source: r.source || '',
+      notes: r.notes || ''
+    }));
+
+    // Stock histories
+    (fgHistRows || []).forEach(r => next.fgHistory.push({
+      id: Number(r.id),
+      date: r.date,
+      product: r.product,
+      type: r.type,
+      delta: Number(r.delta || 0),
+      unit: r.unit || 'kg',
+      source: r.source || '',
+      notes: r.notes || ''
+    }));
+    (rmHistRows || []).forEach(r => next.rmHistory.push({
+      id: Number(r.id),
+      date: r.date,
+      material: r.material,
+      type: r.type,
+      delta: Number(r.delta || 0),
+      source: r.source || '',
+      notes: r.notes || ''
+    }));
+
+    // Shipments
+    (inwardRows || []).forEach(r => next.inward.push({
+      id: Number(r.id),
+      date: r.date,
+      material: r.material,
+      qty: Number(r.qty || 0),
+      supplier: r.supplier || '',
+      notes: r.notes || ''
+    }));
+    (outwardRows || []).forEach(r => next.outward.push({
+      id: Number(r.id),
+      date: r.date,
+      product: r.product,
+      qty: Number(r.qty || 0),
+      buyer: r.buyer || '',
+      notes: r.notes || ''
+    }));
+
+    DB = next;
+  } finally {
+    if (busyTimer) clearTimeout(busyTimer);
+    if (busyShown) showDataBusy(false);
+    refreshInFlight = false;
+    if (refreshQueued) {
+      refreshQueued = false;
+      // allow next tick to avoid a tight loop
+      setTimeout(() => refreshAll().catch(() => {}), 0);
+    }
+  }
+}
+
+function scheduleRefresh() {
+  if (realtimeTimer) return;
+  realtimeTimer = setTimeout(async () => {
+    realtimeTimer = null;
+    await refreshAll();
+    rerenderCurrentPage();
+  }, 350);
+}
+
+function setupRealtime() {
+  if (!supabaseClient) return;
+  if (realtimeChannel) return;
+
+  realtimeChannel = supabaseClient.channel('neutura-realtime');
+  const tables = [
+    'inventory_fg',
+    'inventory_rm',
+    'sacks',
+    'prod_sawdust',
+    'prod_briquette',
+    'prod_biochar',
+    'temperature_sessions',
+    'packaging',
+    'sack_history',
+    'inventory_fg_history',
+    'inventory_rm_history',
+    'inward_shipments',
+    'outward_shipments'
+  ];
+  tables.forEach(table => {
+    realtimeChannel.on(
+      'postgres_changes',
+      { event: '*', schema: 'public', table },
+      () => scheduleRefresh()
+    );
+  });
+  realtimeChannel.subscribe();
+}
+
+async function initSupabase() {
+  showAuthBusy(true);
+  try {
+    const lib = window.supabase || window.supabasejs;
+    const createClient = lib && lib.createClient ? lib.createClient : null;
+    if (!createClient) throw new Error('Supabase client library not loaded');
+    if (!SUPABASE_URL || SUPABASE_URL === 'YOUR_SUPABASE_URL') {
+      throw new Error('Please set SUPABASE_URL in neutura-tracker.html');
+    }
+    if (!SUPABASE_ANON_KEY || SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY') {
+      throw new Error('Please set SUPABASE_ANON_KEY in neutura-tracker.html');
+    }
+    supabaseClient = createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+    });
+
+    const { data: sessData } = await supabaseClient.auth.getSession();
+    session = sessData?.session || null;
+
+    setAuthScreen(!!session);
+    if (session) {
+      await refreshAll();
+      setupRealtime();
+      rerenderCurrentPage();
+    }
+
+    supabaseClient.auth.onAuthStateChange((_event, newSession) => {
+      session = newSession || null;
+      const authed = !!session;
+      setAuthScreen(authed);
+      if (authed) {
+        refreshAll().then(() => { setupRealtime(); rerenderCurrentPage(); }).catch(err => {
+          toast('Refresh error: ' + (err?.message || err), 'err');
+        });
+      }
+    });
+  } catch (e) {
+    toast('Auth init error: ' + (e?.message || e), 'err');
+  } finally {
+    showAuthBusy(false);
+  }
+}
+
+async function signIn() {
+  const email = v('auth-email');
+  const password = v('auth-password');
+  if (!email || !password) { toast('Enter email and password.', 'err'); return; }
+  showAuthBusy(true);
+  try {
+    const { data, error } = await supabaseClient.auth.signInWithPassword({ email, password });
+    if (error) throw error;
+    session = data?.session || null;
+    setAuthScreen(!!session);
+    if (session) {
+      await refreshAll();
+      setupRealtime();
+      render('dashboard');
+    }
+  } catch (e) {
+    toast('Sign in failed: ' + (e?.message || e), 'err');
+  } finally {
+    showAuthBusy(false);
+  }
+}
+
+async function signUp() {
+  const email = v('auth-email');
+  const password = v('auth-password');
+  if (!email || !password) { toast('Enter email and password.', 'err'); return; }
+  showAuthBusy(true);
+  try {
+    const { data, error } = await supabaseClient.auth.signUp({ email, password });
+    if (error) throw error;
+    toast('Account created. Check your email for confirmation if required.', 'ok');
+    // Depending on project settings, user might need email confirmation.
+    // After confirmation, they can sign in.
+    session = data?.session || null;
+    setAuthScreen(!!session);
+  } catch (e) {
+    toast('Sign up failed: ' + (e?.message || e), 'err');
+  } finally {
+    showAuthBusy(false);
+  }
+}
+
+// ========== STATE ==========
+let EDIT={type:null,id:null};
+let prodTab='sawdust';
+let period='all';
+let tempFilter='all';
+
+// ========== NAVIGATION ==========
+function nav(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  const btn=document.querySelector('.nav-item[onclick="nav(\''+page+'\')"]');
+  if(btn)btn.classList.add('active');
+  render(page);
+}
+function render(page){
+  if(page==='dashboard')renderDash();
+  if(page==='production')renderProd();
+  if(page==='temperature')renderTemp();
+  if(page==='finished')renderFG();
+  if(page==='rawmat')renderRM();
+  if(page==='packaging')renderPkg();
+  if(page==='inward')renderInward();
+  if(page==='outward')renderOutward();
+}
+function setProdTab(tab,btn){
+  prodTab=tab;
+  document.querySelectorAll('.prod-tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  ['sawdust','briquette','biochar'].forEach(t=>document.getElementById('prod-'+t).style.display=t===tab?'':'none');
+  const labels={sawdust:'&#x1FAB5; Log Sawdust Batch',briquette:'&#x1F9F1; Log Briquette Batch',biochar:'&#x1F525; Log Biochar Batch'};
+  document.getElementById('prod-add-btn').innerHTML='<button class="btn btn-primary" onclick="openProdModal()">'+labels[tab]+'</button>';
+  renderProdTables();
+}
+function setPeriod(p,btn){
+  period=p;
+  document.querySelectorAll('#page-production .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderProdTables();
+}
+function setTempFilter(f,btn){
+  tempFilter=f;
+  document.querySelectorAll('#page-temperature .tab').forEach(t=>t.classList.remove('active'));
+  btn.classList.add('active');
+  renderTemp();
+}
+
+// ========== RENDER ==========
+function renderDash(){
+  document.getElementById('dash-date').textContent=new Date().toLocaleDateString('en-GB',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const FGK=Object.keys(DB.fg);
+  const cls=['c-blue','c-amber','c-green','c-red','c-gray'];
+  document.getElementById('dash-stats').innerHTML=FGK.map((p,i)=>`
+    <div class="stat-card ${cls[i]||'c-gray'}">
+      <div class="stat-bar"></div>
+      <div class="stat-label">${p}</div>
+      <div class="stat-value">${fmt(DB.fg[p].qty)}<span class="stat-unit">${DB.fg[p].unit}</span></div>
+      <div class="stat-sub">Finished stock</div>
+    </div>`).join('');
+  const all=[
+    ...DB.prod.sawdust.map(r=>({date:r.date,type:'Sawdust',val:r.mfg})),
+    ...DB.prod.briquette.map(r=>({date:r.date,type:'Briquette',val:r.mfg})),
+    ...DB.prod.biochar.map(r=>({date:r.date,type:'Biochar',val:r.biochar}))
+  ].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,8);
+  document.getElementById('dash-recent').innerHTML=all.length
+    ?all.map(r=>`<tr><td>${fmtDate(r.date)}</td><td><span class="badge ${FG_BADGE[r.type]||'badge-gray'}">${r.type}</span></td><td>${fmt(r.val)} kg</td></tr>`).join('')
+    :'<tr><td colspan="3" style="text-align:center;color:var(--muted);padding:18px">No records yet</td></tr>';
+  renderBars('dash-fg',DB.fg,FG_COLORS);
+  renderBars('dash-rm',DB.rm,RM_COLORS);
+  renderCharts();
+}
+
+function renderBars(elId,stock,colors){
+  const keys=Object.keys(stock);
+  const max=Math.max(...keys.map(k=>stock[k].qty||0),1);
+  document.getElementById(elId).innerHTML=keys.map(k=>{
+    const s=stock[k];const pct=Math.min((s.qty/max)*100,100);
+    return `<div class="inv-item">
+      <div class="inv-name" style="color:${colors[k]||'var(--muted)'};">${k}</div>
+      <div class="inv-bar-wrap"><div class="inv-bar" style="width:${pct}%;background:${colors[k]||'var(--muted)'}"></div></div>
+      <div class="inv-qty">${fmt(s.qty)}<span style="color:var(--muted);font-size:10px;margin-left:3px">${s.unit}</span></div>
+    </div>`;
+  }).join('');
+}
+
+function filterPeriod(recs){
+  if(period==='all')return recs;
+  const t=todayStr(),w=weekStart(),m=thisMonth();
+  return recs.filter(r=>{
+    if(period==='today')return r.date===t;
+    if(period==='week')return r.date>=w;
+    if(period==='month')return r.date.startsWith(m);
+    return true;
+  });
+}
+
+function renderProd(){
+  document.getElementById('prod-add-btn').innerHTML='<button class="btn btn-primary" onclick="openProdModal()">&#x1FAB5; Log Sawdust Batch</button>';
+  renderProdTables();
+}
+
+function renderProdTables(){
+  const sd=filterPeriod([...DB.prod.sawdust].sort((a,b)=>b.date.localeCompare(a.date)));
+  document.getElementById('tbl-sawdust').innerHTML=sd.length
+    ?sd.map(r=>`<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td><span class="badge badge-blue">${r.ingr}</span></td>
+      <td>${fmt(r.amount)}</td><td>${fmt(r.surplus)}</td><td>${fmt(r.used)}</td>
+      <td style="color:var(--accent2);font-weight:500">${fmt(r.mfg)}</td>
+      <td><div class="action-btns">
+        <button class="btn btn-edit btn-sm" onclick="editSawdust(${r.id})">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="delProd('sawdust',${r.id})">Del</button>
+      </div></td></tr>`).join('')
+    :emptyRow(7,'No sawdust records for this period');
+
+  const br=filterPeriod([...DB.prod.briquette].sort((a,b)=>b.date.localeCompare(a.date)));
+  document.getElementById('tbl-briquette').innerHTML=br.length
+    ?br.map(r=>`<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td><span class="badge badge-amber">${r.ingr}</span></td>
+      <td>${fmt(r.amount)}</td><td>${fmt(r.surplus)}</td><td>${fmt(r.used)}</td>
+      <td style="color:var(--accent);font-weight:500">${fmt(r.mfg)}</td>
+      <td><div class="action-btns">
+        <button class="btn btn-edit btn-sm" onclick="editBriquette(${r.id})">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="delProd('briquette',${r.id})">Del</button>
+      </div></td></tr>`).join('')
+    :emptyRow(7,'No briquette records for this period');
+
+  const bc=filterPeriod([...DB.prod.biochar].sort((a,b)=>b.date.localeCompare(a.date)));
+  document.getElementById('tbl-biochar').innerHTML=bc.length
+    ?bc.map(r=>`<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td><span class="badge badge-gray">${r.reactor}</span></td>
+      <td><span class="badge badge-green">${r.ingr1}</span></td>
+      <td>${fmt(r.qty1)}</td>
+      <td>${r.ingr2?'<span class="badge badge-blue">'+r.ingr2+'</span>':'—'}</td>
+      <td>${r.ingr2?fmt(r.qty2):'—'}</td>
+      <td>${fmt(r.totalIngr)}</td>
+      <td>${fmt(r.fuelWV)}</td><td>${fmt(r.fuelWP)}</td><td>${fmt(r.fuelW)}</td>
+      <td>${fmt(r.ash)}</td>
+      <td style="color:var(--accent2);font-weight:500">${fmt(r.biochar)}</td>
+      <td style="color:var(--accent3);font-weight:500">${fmt(r.biooil)}</td>
+      <td><div class="action-btns">
+        <button class="btn btn-edit btn-sm" onclick="editBiochar(${r.id})">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="delProd('biochar',${r.id})">Del</button>
+      </div></td></tr>`).join('')
+    :emptyRow(14,'No biochar records for this period');
+}
+
+function renderTemp(){
+  let sessions=[...DB.temperature].sort((a,b)=>b.date.localeCompare(a.date));
+  if(tempFilter==='r1')sessions=sessions.filter(s=>s.reactor==='Reactor 1');
+  if(tempFilter==='r2')sessions=sessions.filter(s=>s.reactor==='Reactor 2');
+
+  const avgRT=sessions.length?sessions.reduce((s,r)=>s+r.residenceTime,0)/sessions.length:0;
+  const maxRT=sessions.length?Math.max(...sessions.map(r=>r.residenceTime)):0;
+  document.getElementById('temp-stats').innerHTML=`
+    <div class="stat-card c-red"><div class="stat-bar"></div>
+      <div class="stat-label">Total Sessions</div>
+      <div class="stat-value">${sessions.length}<span class="stat-unit">logs</span></div>
+    </div>
+    <div class="stat-card c-amber"><div class="stat-bar"></div>
+      <div class="stat-label">Avg Residence Time</div>
+      <div class="stat-value">${avgRT.toFixed(1)}<span class="stat-unit">h</span></div>
+    </div>
+    <div class="stat-card c-green"><div class="stat-bar"></div>
+      <div class="stat-label">Max Residence Time</div>
+      <div class="stat-value">${maxRT.toFixed(1)}<span class="stat-unit">h</span></div>
+    </div>`;
+
+  document.getElementById('tbl-temperature').innerHTML=sessions.length
+    ?sessions.map(s=>{
+      const validTemps=s.temps.filter(t=>t!==null&&t!==undefined);
+      const startTemp=s.temps[0]!=null?s.temps[0]:'—';
+      const peakTemp=validTemps.length?Math.max(...validTemps):'—';
+      const hotCount=s.temps.slice(1).filter(t=>t!=null&&t>=350).length;
+      return `<tr>
+        <td>${fmtDate(s.date)}</td>
+        <td><span class="badge badge-gray">${s.reactor}</span></td>
+        <td>${startTemp!=='—'?startTemp+'&#176;C':'—'}</td>
+        <td class="${peakTemp>=350?'temp-hot':peakTemp>=200?'temp-warm':'temp-low'}">${peakTemp!=='—'?peakTemp+'&#176;C':'—'}</td>
+        <td>${hotCount} / 20</td>
+        <td><span class="residence-badge">${s.residenceTime.toFixed(1)} h</span></td>
+        <td><div class="action-btns">
+          <button class="btn btn-edit btn-sm" onclick="editTemperature(${s.id})">Edit</button>
+          <button class="btn btn-danger btn-sm" onclick="delTemperature(${s.id})">Del</button>
+        </div></td>
+      </tr>`;
+    }).join('')
+    :emptyRow(7,'No temperature sessions logged yet');
+}
+
+function renderFG(){
+  renderBars('fg-list',DB.fg,FG_COLORS);
+  const hist=[...DB.fgHistory].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('fg-history').innerHTML=hist.length
+    ?hist.map(r=>`<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td><span class="badge ${FG_BADGE[r.product]||'badge-gray'}">${r.product}</span></td>
+      <td>${r.type}</td>
+      <td style="color:${r.delta>=0?'var(--accent2)':'var(--accent3)'}">${r.delta>=0?'+':''}${fmt(Math.abs(r.delta))} ${r.unit}</td>
+      <td style="color:var(--muted);font-size:10px">${r.source||'Manual'}</td>
+      <td style="color:var(--muted);font-size:10px">${r.notes||'—'}</td>
+    </tr>`).join('')
+    :emptyRow(6,'No history yet');
+}
+
+function renderRM(){
+  renderBars('rm-list',DB.rm,RM_COLORS);
+  const hist=[...DB.rmHistory].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('rm-history').innerHTML=hist.length
+    ?hist.map(r=>`<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td>${r.material}</td>
+      <td>${r.type}</td>
+      <td style="color:${r.delta>=0?'var(--accent2)':'var(--accent3)'}">${r.delta>=0?'+':''}${fmt(Math.abs(r.delta))} kg</td>
+      <td style="color:var(--muted);font-size:10px">${r.source||'Manual'}</td>
+      <td style="color:var(--muted);font-size:10px">${r.notes||'—'}</td>
+    </tr>`).join('')
+    :emptyRow(6,'No history yet');
+}
+
+function renderPkg(){
+  const totalSacks=DB.packaging.reduce((s,r)=>s+r.count,0);
+  const totalWeight=DB.packaging.reduce((s,r)=>s+r.totalWeight,0);
+  document.getElementById('pkg-stats').innerHTML=`
+    <div class="stat-card c-blue"><div class="stat-bar"></div>
+      <div class="stat-label">Available Sacks</div>
+      <div class="stat-value">${fmt(DB.sacks.sack.qty)}<span class="stat-unit">pcs</span></div>
+      <div class="stat-sub">Ready to use</div>
+    </div>
+    <div class="stat-card c-green"><div class="stat-bar"></div>
+      <div class="stat-label">Available Inner Sacks</div>
+      <div class="stat-value">${fmt(DB.sacks.innerSack.qty)}<span class="stat-unit">pcs</span></div>
+      <div class="stat-sub">Ready to use</div>
+    </div>
+    <div class="stat-card c-amber"><div class="stat-bar"></div>
+      <div class="stat-label">Total Packaged Sacks</div>
+      <div class="stat-value">${fmt(totalSacks)}<span class="stat-unit">pcs</span></div>
+      <div class="stat-sub">All batches combined</div>
+    </div>
+    <div class="stat-card c-red"><div class="stat-bar"></div>
+      <div class="stat-label">Total Weight Packaged</div>
+      <div class="stat-value">${fmt(totalWeight)}<span class="stat-unit">kg</span></div>
+      <div class="stat-sub">All batches combined</div>
+    </div>`;
+
+  const recs=[...DB.packaging].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('pkg-table').innerHTML=recs.length
+    ?recs.map(r=>`<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td>${fmt(r.netWeight)} kg/sack</td>
+      <td>${fmt(r.count)} sacks</td>
+      <td style="color:var(--accent);font-weight:500">${fmt(r.totalWeight)} kg</td>
+      <td style="color:var(--muted);font-size:10px">${r.notes||'—'}</td>
+      <td><div class="action-btns">
+        <button class="btn btn-edit btn-sm" onclick="editPackaging(${r.id})">Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="delPackaging(${r.id})">Del</button>
+      </div></td>
+    </tr>`).join('')
+    :emptyRow(6,'No packaging batches yet');
+
+  const hist=[...DB.sackHistory].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('sack-history').innerHTML=hist.length
+    ?hist.map(r=>`<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td>${r.type}</td>
+      <td style="color:${r.sackDelta>=0?'var(--accent2)':'var(--accent3)'}">${r.sackDelta>=0?'+':''}${r.sackDelta} pcs</td>
+      <td style="color:${r.innerDelta>=0?'var(--accent2)':'var(--accent3)'}">${r.innerDelta>=0?'+':''}${r.innerDelta} pcs</td>
+      <td style="color:var(--muted);font-size:10px">${r.source||'—'}</td>
+      <td style="color:var(--muted);font-size:10px">${r.notes||'—'}</td>
+    </tr>`).join('')
+    :emptyRow(6,'No history yet');
+}
+
+function renderInward(){
+  const mats=['Wood Veneer','Wood Pellet','Wood','CPN Wood'];
+  const cls=['c-blue','c-green','c-amber','c-red'];
+  document.getElementById('inward-stats').innerHTML=mats.map((m,i)=>{
+    const total=DB.inward.filter(r=>r.material===m).reduce((s,r)=>s+n(r.qty),0);
+    return `<div class="stat-card ${cls[i]}"><div class="stat-bar"></div>
+      <div class="stat-label">${m}</div>
+      <div class="stat-value">${fmt(total)}<span class="stat-unit">kg</span></div>
+      <div class="stat-sub">Total received</div>
+    </div>`;
+  }).join('');
+  const recs=[...DB.inward].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('inward-table').innerHTML=recs.length
+    ?recs.map(r=>`<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td><span class="badge badge-blue">${r.material}</span></td>
+      <td>${fmt(r.qty)}</td>
+      <td>${r.supplier||'—'}</td>
+      <td style="color:var(--muted);font-size:10px">${r.notes||'—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="delInward(${r.id})">Del</button></td>
+    </tr>`).join('')
+    :emptyRow(6,'No inward shipments');
+}
+
+function renderOutward(){
+  const prods=Object.keys(DB.fg);
+  const cls=['c-blue','c-amber','c-green','c-red','c-gray'];
+  document.getElementById('outward-stats').innerHTML=prods.map((p,i)=>{
+    const total=DB.outward.filter(r=>r.product===p).reduce((s,r)=>s+n(r.qty),0);
+    return `<div class="stat-card ${cls[i]||'c-gray'}"><div class="stat-bar"></div>
+      <div class="stat-label">${p} Sold</div>
+      <div class="stat-value">${fmt(total)}<span class="stat-unit">kg</span></div>
+    </div>`;
+  }).join('');
+  const recs=[...DB.outward].sort((a,b)=>b.date.localeCompare(a.date));
+  document.getElementById('outward-table').innerHTML=recs.length
+    ?recs.map(r=>`<tr>
+      <td>${fmtDate(r.date)}</td>
+      <td><span class="badge ${FG_BADGE[r.product]||'badge-gray'}">${r.product}</span></td>
+      <td>${fmt(r.qty)}</td>
+      <td>${r.buyer||'—'}</td>
+      <td style="color:var(--muted);font-size:10px">${r.notes||'—'}</td>
+      <td><button class="btn btn-danger btn-sm" onclick="delOutward(${r.id})">Del</button></td>
+    </tr>`).join('')
+    :emptyRow(6,'No sales recorded');
+}
+
+// ========== TEMPERATURE INPUT BUILDER ==========
+function buildTempInputs(){
+  document.getElementById('temp-inputs-grid').innerHTML=TEMP_LABELS.map((label,i)=>
+    '<div class="form-group">' +
+    '<label>' + label + '</label>' +
+    '<input type="number" id="tm-t'+i+'" min="0" max="650" step="1" placeholder="&#176;C" oninput="calcRT()"/>' +
+    '</div>'
+  ).join('');
+}
+
+function calcRT(){
+  let count=0;
+  for(let i=1;i<=20;i++){
+    const val=parseFloat(document.getElementById('tm-t'+i)?.value)||0;
+    if(val>=350)count++;
+  }
+  const h=(count*0.5).toFixed(1);
+  document.getElementById('tm-rt-display').textContent=h+' h';
+}
+
+// ========== AUTO-CALC ==========
+function calcSD(){const a=n(v('sd-amount')),s=n(v('sd-surplus'));document.getElementById('sd-used').value=Math.max(0,a-s).toFixed(2);}
+function calcBR(){const a=n(v('br-amount')),s=n(v('br-surplus'));document.getElementById('br-used').value=Math.max(0,a-s).toFixed(2);}
+function calcBC(){document.getElementById('bc-total-ingr').value=(n(v('bc-qty1'))+n(v('bc-qty2'))).toFixed(2);}
+function calcPkg(){const nw=n(v('pk-netweight')),ct=n(v('pk-count'));document.getElementById('pk-total').value=(nw*ct).toFixed(2);}
+
+// ========== MODALS ==========
+function openModal(type){
+  const t=todayStr();
+  const map={adjFG:'afg',adjRM:'arm',inward:'in',outward:'out',sackadj:'sa'};
+  const pre=map[type];
+  if(pre){const el=document.getElementById(pre+'-date');if(el)el.value=t;}
+  document.getElementById('modal-'+type).classList.add('open');
+}
+function closeModal(type){
+  document.getElementById('modal-'+type).classList.remove('open');
+  EDIT={type:null,id:null};
+}
+document.querySelectorAll('.modal-overlay').forEach(m=>m.addEventListener('click',e=>{if(e.target===m){m.classList.remove('open');EDIT={type:null,id:null};}}));
+
+function openProdModal(){
+  EDIT={type:null,id:null};
+  const titleIds={sawdust:'sd-modal-title',briquette:'br-modal-title',biochar:'bc-modal-title'};
+  const titles={sawdust:'Log Sawdust Batch',briquette:'Log Briquette Batch',biochar:'Log Biochar Batch'};
+  const dateIds={sawdust:'sd-date',briquette:'br-date',biochar:'bc-date'};
+  const tEl=document.getElementById(titleIds[prodTab]);
+  if(tEl)tEl.textContent=titles[prodTab];
+  clearProdForm(prodTab);
+  document.getElementById('modal-'+prodTab).classList.add('open');
+  const dEl=document.getElementById(dateIds[prodTab]);
+  if(dEl)dEl.value=todayStr();
+}
+
+function openTempModal(){
+  EDIT={type:null,id:null};
+  document.getElementById('tm-modal-title').textContent='Log Temperature Session';
+  document.getElementById('tm-date').value=todayStr();
+  document.getElementById('tm-reactor').value='Reactor 1';
+  buildTempInputs();
+  document.getElementById('tm-rt-display').textContent='0.0 h';
+  document.getElementById('modal-temperature').classList.add('open');
+}
+
+function openPkgModal(){
+  EDIT={type:null,id:null};
+  document.getElementById('pk-modal-title').textContent='New Packaging Batch';
+  document.getElementById('pk-date').value=todayStr();
+  clearFields(['pk-netweight','pk-count','pk-total','pk-notes']);
+  document.getElementById('modal-packaging').classList.add('open');
+}
+
+// ========== EDIT OPENERS ==========
+function editSawdust(id){
+  const r=DB.prod.sawdust.find(x=>x.id===id);if(!r)return;
+  EDIT={type:'sawdust',id};
+  document.getElementById('sd-modal-title').textContent='Edit Sawdust Batch';
+  document.getElementById('sd-date').value=r.date;
+  document.getElementById('sd-ingr').value=r.ingr;
+  document.getElementById('sd-amount').value=r.amount;
+  document.getElementById('sd-surplus').value=r.surplus;
+  document.getElementById('sd-used').value=r.used;
+  document.getElementById('sd-mfg').value=r.mfg;
+  document.getElementById('sd-notes').value=r.notes||'';
+  document.getElementById('modal-sawdust').classList.add('open');
+}
+function editBriquette(id){
+  const r=DB.prod.briquette.find(x=>x.id===id);if(!r)return;
+  EDIT={type:'briquette',id};
+  document.getElementById('br-modal-title').textContent='Edit Briquette Batch';
+  document.getElementById('br-date').value=r.date;
+  document.getElementById('br-ingr').value=r.ingr;
+  document.getElementById('br-amount').value=r.amount;
+  document.getElementById('br-surplus').value=r.surplus;
+  document.getElementById('br-used').value=r.used;
+  document.getElementById('br-mfg').value=r.mfg;
+  document.getElementById('br-notes').value=r.notes||'';
+  document.getElementById('modal-briquette').classList.add('open');
+}
+function editBiochar(id){
+  const r=DB.prod.biochar.find(x=>x.id===id);if(!r)return;
+  EDIT={type:'biochar',id};
+  document.getElementById('bc-modal-title').textContent='Edit Biochar Batch';
+  document.getElementById('bc-date').value=r.date;
+  document.getElementById('bc-reactor').value=r.reactor;
+  document.getElementById('bc-ingr1').value=r.ingr1;
+  document.getElementById('bc-qty1').value=r.qty1;
+  document.getElementById('bc-ingr2').value=r.ingr2||'';
+  document.getElementById('bc-qty2').value=r.qty2||0;
+  document.getElementById('bc-total-ingr').value=r.totalIngr;
+  document.getElementById('bc-fuel-wv').value=r.fuelWV||0;
+  document.getElementById('bc-fuel-wp').value=r.fuelWP||0;
+  document.getElementById('bc-fuel-w').value=r.fuelW||0;
+  document.getElementById('bc-ash').value=r.ash||0;
+  document.getElementById('bc-biochar').value=r.biochar;
+  document.getElementById('bc-biooil').value=r.biooil;
+  document.getElementById('bc-notes').value=r.notes||'';
+  document.getElementById('modal-biochar').classList.add('open');
+}
+function editTemperature(id){
+  const s=DB.temperature.find(x=>x.id===id);if(!s)return;
+  EDIT={type:'temperature',id};
+  document.getElementById('tm-modal-title').textContent='Edit Temperature Session';
+  document.getElementById('tm-date').value=s.date;
+  document.getElementById('tm-reactor').value=s.reactor;
+  buildTempInputs();
+  s.temps.forEach((t,i)=>{
+    const el=document.getElementById('tm-t'+i);
+    if(el&&t!=null)el.value=t;
+  });
+  calcRT();
+  document.getElementById('modal-temperature').classList.add('open');
+}
+function editPackaging(id){
+  const r=DB.packaging.find(x=>x.id===id);if(!r)return;
+  EDIT={type:'packaging',id};
+  document.getElementById('pk-modal-title').textContent='Edit Packaging Batch';
+  document.getElementById('pk-date').value=r.date;
+  document.getElementById('pk-netweight').value=r.netWeight;
+  document.getElementById('pk-count').value=r.count;
+  document.getElementById('pk-total').value=r.totalWeight;
+  document.getElementById('pk-notes').value=r.notes||'';
+  document.getElementById('modal-packaging').classList.add('open');
+}
+
+// ========== SAVE ==========
+async function saveSawdust(){
+  if (!supabaseClient) { toast('Not connected to Supabase.', 'err'); return; }
+  const date=v('sd-date'),ingr=v('sd-ingr'),amount=n(v('sd-amount')),surplus=n(v('sd-surplus'));
+  const used=Math.max(0,amount-surplus),mfg=n(v('sd-mfg'));
+  if(!date||!amount||!mfg){toast('Fill Date, Amount and Manufactured.','err');return;}
+
+  try{
+    if(EDIT.id&&EDIT.type==='sawdust'){
+      const payload={date,ingr,amount,surplus,used,mfg,notes:v('sd-notes')};
+      const { error } = await supabaseClient.from('prod_sawdust')
+        .update(payload).eq('id', EDIT.id);
+      if(error) throw error;
+      toast('Sawdust batch updated! (Inventory unchanged)','ok');
+    } else {
+      // 1) Insert production record
+      const { error: insErr } = await supabaseClient.from('prod_sawdust')
+        .insert({ date, ingr, amount, surplus, used, mfg, notes: v('sd-notes') });
+      if (insErr) throw insErr;
+
+      // 2) Update inventory + history (only on INSERT; edits/deletes do not reverse inventory)
+      const oldRm = Number(DB.rm?.[ingr]?.qty || 0);
+      const newRm = Math.max(0, oldRm - used);
+      const deltaRm = newRm - oldRm;
+      const rmUnit = DB.rm?.[ingr]?.unit || 'kg';
+      const { error: rmUpdErr } = await supabaseClient.from('inventory_rm')
+        .upsert({ material: ingr, qty: newRm, unit: rmUnit }, { onConflict: 'material' });
+      if (rmUpdErr) throw rmUpdErr;
+      const { error: rmHistErr } = await supabaseClient.from('inventory_rm_history')
+        .insert({ date, material: ingr, type: 'Consumed', delta: deltaRm, source: 'Production', notes: v('sd-notes') });
+      if (rmHistErr) throw rmHistErr;
+
+      const product = 'Sawdust';
+      const oldFg = Number(DB.fg?.[product]?.qty || 0);
+      const newFg = oldFg + mfg;
+      const unit = DB.fg?.[product]?.unit || 'kg';
+      const { error: fgUpdErr } = await supabaseClient.from('inventory_fg')
+        .upsert({ product, qty: newFg, unit }, { onConflict: 'product' });
+      if (fgUpdErr) throw fgUpdErr;
+      const { error: fgHistErr } = await supabaseClient.from('inventory_fg_history')
+        .insert({ date, product, type: 'Production', delta: mfg, unit, source: 'Production', notes: v('sd-notes') });
+      if (fgHistErr) throw fgHistErr;
+
+      toast('Sawdust batch saved!','ok');
+    }
+    closeModal('sawdust');
+    await refreshAll();
+    rerenderCurrentPage();
+  } catch (e) {
+    toast('Save failed: ' + (e?.message || e), 'err');
+  }
+}
+
+async function saveBriquette(){
+  if (!supabaseClient) { toast('Not connected to Supabase.', 'err'); return; }
+  const date=v('br-date'),ingr=v('br-ingr'),amount=n(v('br-amount')),surplus=n(v('br-surplus'));
+  const used=Math.max(0,amount-surplus),mfg=n(v('br-mfg'));
+  if(!date||!amount||!mfg){toast('Fill Date, Amount and Manufactured.','err');return;}
+
+  try{
+    if(EDIT.id&&EDIT.type==='briquette'){
+      const payload={date,ingr,amount,surplus,used,mfg,notes:v('br-notes')};
+      const { error } = await supabaseClient.from('prod_briquette')
+        .update(payload).eq('id', EDIT.id);
+      if(error) throw error;
+      toast('Briquette batch updated! (Inventory unchanged)','ok');
+    } else {
+      // 1) Insert production record
+      const { error: insErr } = await supabaseClient.from('prod_briquette')
+        .insert({ date, ingr, amount, surplus, used, mfg, notes: v('br-notes') });
+      if (insErr) throw insErr;
+
+      // 2) Update inventory + history (only on INSERT)
+      const oldRm = Number(DB.rm?.[ingr]?.qty || 0);
+      const newRm = Math.max(0, oldRm - used);
+      const deltaRm = newRm - oldRm;
+      const rmUnit = DB.rm?.[ingr]?.unit || 'kg';
+
+      const { error: rmUpdErr } = await supabaseClient.from('inventory_rm')
+        .upsert({ material: ingr, qty: newRm, unit: rmUnit }, { onConflict: 'material' });
+      if (rmUpdErr) throw rmUpdErr;
+
+      const { error: rmHistErr } = await supabaseClient.from('inventory_rm_history')
+        .insert({ date, material: ingr, type: 'Consumed', delta: deltaRm, source: 'Production', notes: v('br-notes') });
+      if (rmHistErr) throw rmHistErr;
+
+      const product = 'Briquette';
+      const oldFg = Number(DB.fg?.[product]?.qty || 0);
+      const newFg = oldFg + mfg;
+      const unit = DB.fg?.[product]?.unit || 'kg';
+
+      const { error: fgUpdErr } = await supabaseClient.from('inventory_fg')
+        .upsert({ product, qty: newFg, unit }, { onConflict: 'product' });
+      if (fgUpdErr) throw fgUpdErr;
+
+      const { error: fgHistErr } = await supabaseClient.from('inventory_fg_history')
+        .insert({ date, product, type: 'Production', delta: mfg, unit, source: 'Production', notes: v('br-notes') });
+      if (fgHistErr) throw fgHistErr;
+
+      toast('Briquette batch saved!','ok');
+    }
+    closeModal('briquette');
+    await refreshAll();
+    rerenderCurrentPage();
+  } catch (e) {
+    toast('Save failed: ' + (e?.message || e), 'err');
+  }
+}
+
+async function saveBiochar(){
+  const date=v('bc-date'),reactor=v('bc-reactor');
+  const ingr1=v('bc-ingr1'),qty1=n(v('bc-qty1'));
+  const ingr2=v('bc-ingr2'),qty2=n(v('bc-qty2'));
+  const totalIngr=qty1+qty2;
+  const fuelWV=n(v('bc-fuel-wv')),fuelWP=n(v('bc-fuel-wp')),fuelW=n(v('bc-fuel-w'));
+  const ash=n(v('bc-ash')),biochar=n(v('bc-biochar')),biooil=n(v('bc-biooil'));
+  if(!date||!ingr1||!qty1){toast('Fill Date, Reactor and 1st Ingredient.','err');return;}
+  try{
+    if(EDIT.id&&EDIT.type==='biochar'){
+      const payload={
+        date,
+        reactor,
+        ingr1,
+        qty1,
+        ingr2: ingr2 || null,
+        qty2,
+        total_ingr: totalIngr,
+        fuel_wv: fuelWV,
+        fuel_wp: fuelWP,
+        fuel_w: fuelW,
+        ash,
+        biochar,
+        biooil,
+        notes: v('bc-notes')
+      };
+      const { error } = await supabaseClient.from('prod_biochar')
+        .update(payload).eq('id', EDIT.id);
+      if(error) throw error;
+      toast('Biochar batch updated! (Inventory unchanged)','ok');
+    } else {
+      // 1) Insert production record
+      const { error: insErr } = await supabaseClient.from('prod_biochar').insert({
+        date,
+        reactor,
+        ingr1,
+        qty1,
+        ingr2: ingr2 || null,
+        qty2,
+        total_ingr: totalIngr,
+        fuel_wv: fuelWV,
+        fuel_wp: fuelWP,
+        fuel_w: fuelW,
+        ash,
+        biochar,
+        biooil,
+        notes: v('bc-notes')
+      });
+      if (insErr) throw insErr;
+
+      // 2) Update inventory + history (only on INSERT)
+      const batchNotes = v('bc-notes');
+      const source = 'Biochar Production';
+
+      // Consume ingredients (ingr == 'Briquette' consumes Finished Goods; otherwise consumes Raw Materials)
+      async function consumeIngredient(ingr, qty) {
+        if (!ingr || !qty) return;
+        if (ingr === 'Briquette') {
+          const product = 'Briquette';
+          const oldFg = Number(DB.fg?.[product]?.qty || 0);
+          const newFg = Math.max(0, oldFg - qty);
+          const delta = newFg - oldFg;
+          const unit = DB.fg?.[product]?.unit || 'kg';
+          const { error: fgUpdErr } = await supabaseClient.from('inventory_fg')
+            .upsert({ product, qty: newFg, unit }, { onConflict: 'product' });
+          if (fgUpdErr) throw fgUpdErr;
+          // Keep in-memory snapshot consistent for subsequent ingredient consumption.
+          if (DB.fg?.[product]) DB.fg[product].qty = newFg;
+          const { error: fgHistErr } = await supabaseClient.from('inventory_fg_history')
+            .insert({
+              date,
+              product,
+              type: 'Consumed',
+              delta,
+              unit,
+              source,
+              notes: batchNotes
+            });
+          if (fgHistErr) throw fgHistErr;
+        } else {
+          const oldRm = Number(DB.rm?.[ingr]?.qty || 0);
+          const newRm = Math.max(0, oldRm - qty);
+          const delta = newRm - oldRm;
+          const unit = DB.rm?.[ingr]?.unit || 'kg';
+          const { error: rmUpdErr } = await supabaseClient.from('inventory_rm')
+            .upsert({ material: ingr, qty: newRm, unit }, { onConflict: 'material' });
+          if (rmUpdErr) throw rmUpdErr;
+          // Keep in-memory snapshot consistent for subsequent ingredient consumption.
+          if (DB.rm?.[ingr]) DB.rm[ingr].qty = newRm;
+          const { error: rmHistErr } = await supabaseClient.from('inventory_rm_history')
+            .insert({
+              date,
+              material: ingr,
+              type: 'Consumed',
+              delta,
+              source,
+              notes: batchNotes
+            });
+          if (rmHistErr) throw rmHistErr;
+        }
+      }
+
+      await consumeIngredient(ingr1, qty1);
+      await consumeIngredient(ingr2, qty2);
+
+      // Add outputs
+      const outputs = [
+        { product: 'Biochar', qty: biochar, unit: 'kg' },
+        { product: 'Bio Oil', qty: biooil, unit: 'liter' },
+        { product: 'Ash', qty: ash, unit: 'kg' }
+      ];
+
+      for (const o of outputs) {
+        const oldFg = Number(DB.fg?.[o.product]?.qty || 0);
+        const newFg = oldFg + o.qty;
+        const { error: fgUpdErr } = await supabaseClient.from('inventory_fg')
+          .upsert({ product: o.product, qty: newFg, unit: o.unit }, { onConflict: 'product' });
+        if (fgUpdErr) throw fgUpdErr;
+        if (DB.fg?.[o.product]) DB.fg[o.product].qty = newFg;
+        const { error: fgHistErr } = await supabaseClient.from('inventory_fg_history')
+          .insert({
+            date,
+            product: o.product,
+            type: 'Production',
+            delta: o.qty,
+            unit: o.unit,
+            source,
+            notes: batchNotes
+          });
+        if (fgHistErr) throw fgHistErr;
+      }
+
+      toast('Biochar batch saved!','ok');
+    }
+    closeModal('biochar');
+    await refreshAll();
+    rerenderCurrentPage();
+  } catch (e) {
+    toast('Save failed: ' + (e?.message || e), 'err');
+  }
+}
+
+async function saveTemperature(){
+  const date=v('tm-date'),reactor=v('tm-reactor');
+  if(!date){toast('Select a date.','err');return;}
+  const temps=[];
+  for(let i=0;i<=20;i++){const el=document.getElementById('tm-t'+i);temps.push(el&&el.value!==''?parseFloat(el.value):null);}
+  let rtCount=0;
+  for(let i=1;i<=20;i++){if(temps[i]!=null&&temps[i]>=350)rtCount++;}
+  const residenceTime=rtCount*0.5;
+
+  try{
+    if(EDIT.id&&EDIT.type==='temperature'){
+      const { error } = await supabaseClient.from('temperature_sessions')
+        .update({date,reactor,temps,residence_time: residenceTime})
+        .eq('id', EDIT.id);
+      if(error) throw error;
+      toast('Session updated!','ok');
+    } else {
+      const { error } = await supabaseClient.from('temperature_sessions')
+        .insert({date,reactor,temps,residence_time: residenceTime});
+      if(error) throw error;
+      toast('Temperature session saved!','ok');
+    }
+    closeModal('temperature');
+    await refreshAll();
+    rerenderCurrentPage();
+  } catch (e) {
+    toast('Save failed: ' + (e?.message || e), 'err');
+  }
+}
+
+async function savePackaging(){
+  if (!supabaseClient) { toast('Not connected to Supabase.', 'err'); return; }
+  const date=v('pk-date'),netWeight=n(v('pk-netweight')),count=Math.floor(n(v('pk-count')));
+  const totalWeight=netWeight*count;
+  if(!date||!netWeight||!count){toast('Fill Date, Net Weight and Number of Sacks.','err');return;}
+
+  try{
+    if(EDIT.id&&EDIT.type==='packaging'){
+      const payload={date,net_weight:netWeight,count,total_weight:totalWeight,notes:v('pk-notes')};
+      const { error } = await supabaseClient.from('packaging')
+        .update(payload).eq('id', EDIT.id);
+      if(error) throw error;
+      toast('Packaging batch updated!','ok');
+    } else {
+      // 1) Insert packaging batch
+      const { error: insErr } = await supabaseClient.from('packaging')
+        .insert({ date, net_weight: netWeight, count, total_weight: totalWeight, notes: v('pk-notes') });
+      if (insErr) throw insErr;
+
+      // 2) Consume sack supplies (only on INSERT; edits/deletes do not reverse inventory)
+      const batchNotes = v('pk-notes');
+      const source = 'Packaging';
+
+      const oldSack = Number(DB.sacks?.sack?.qty || 0);
+      const oldInner = Number(DB.sacks?.innerSack?.qty || 0);
+      const newSack = Math.max(0, oldSack - count);
+      const newInner = Math.max(0, oldInner - count);
+      const deltaSack = newSack - oldSack;
+      const deltaInner = newInner - oldInner;
+
+      const { error: sackUpdErr } = await supabaseClient.from('sacks')
+        .upsert({ type: 'sack', qty: newSack }, { onConflict: 'type' });
+      if (sackUpdErr) throw sackUpdErr;
+      const { error: innerUpdErr } = await supabaseClient.from('sacks')
+        .upsert({ type: 'innerSack', qty: newInner }, { onConflict: 'type' });
+      if (innerUpdErr) throw innerUpdErr;
+
+      const { error: histErr } = await supabaseClient.from('sack_history')
+        .insert({
+          date,
+          type: 'Packaging',
+          sack_delta: deltaSack,
+          inner_delta: deltaInner,
+          source,
+          notes: batchNotes
+        });
+      if (histErr) throw histErr;
+
+      toast('Packaging batch saved!','ok');
+    }
+    closeModal('packaging');
+    await refreshAll();
+    rerenderCurrentPage();
+  } catch (e) {
+    toast('Save failed: ' + (e?.message || e), 'err');
+  }
+}
+
+async function saveSackAdj(){
+  if (!supabaseClient) { toast('Not connected to Supabase.', 'err'); return; }
+  const date=v('sa-date'),type=v('sa-type'),adj=v('sa-adj'),qty=n(v('sa-qty'));
+  if(!date||!qty){toast('Fill all fields.','err');return;}
+
+  try{
+    const old = type === 'sack' ? Number(DB.sacks?.sack?.qty || 0) : Number(DB.sacks?.innerSack?.qty || 0);
+    let next;
+    if (adj === 'add') next = old + qty;
+    if (adj === 'remove') next = Math.max(0, old - qty);
+    if (adj === 'set') next = qty;
+
+    const delta = next - old;
+
+    const { error: updErr } = await supabaseClient.from('sacks')
+      .upsert({ type, qty: next }, { onConflict: 'type' });
+    if (updErr) throw updErr;
+
+    const { error: histErr } = await supabaseClient.from('sack_history')
+      .insert({
+        date,
+        type,
+        sack_delta: type === 'sack' ? delta : 0,
+        inner_delta: type === 'innerSack' ? delta : 0,
+        source: 'Manual',
+        notes: v('sa-notes')
+      });
+    if (histErr) throw histErr;
+
+    closeModal('sackadj');
+    await refreshAll();
+    rerenderCurrentPage();
+    toast('Sack stock updated!','ok');
+  } catch (e) {
+    toast('Save failed: ' + (e?.message || e), 'err');
+  }
+}
+
+async function saveAdjFG(){
+  if (!supabaseClient) { toast('Not connected to Supabase.', 'err'); return; }
+  const date=v('afg-date'),product=v('afg-product'),type=v('afg-type'),qty=n(v('afg-qty')),unit=v('afg-unit');
+  if(!date||!qty){toast('Fill all fields.','err');return;}
+
+  try{
+    const baseUnit = product === 'Bio Oil' ? 'liter' : 'kg';
+    let qtyBase = qty;
+    if (unit === baseUnit) {
+      qtyBase = qty;
+    } else if (unit === 'ton' && baseUnit === 'kg') {
+      qtyBase = qty * 1000;
+    } else {
+      toast('Unit mismatch for ' + product + '. Use ' + baseUnit + '.', 'err');
+      return;
+    }
+
+    const old = Number(DB.fg?.[product]?.qty || 0);
+    let next;
+    if (type === 'add') next = old + qtyBase;
+    if (type === 'remove') next = Math.max(0, old - qtyBase);
+    if (type === 'set') next = qtyBase;
+    const delta = next - old;
+
+    const { error: updErr } = await supabaseClient.from('inventory_fg')
+      .upsert({ product, qty: next, unit: baseUnit }, { onConflict: 'product' });
+    if (updErr) throw updErr;
+
+    const { error: histErr } = await supabaseClient.from('inventory_fg_history')
+      .insert({
+        date,
+        product,
+        type: 'Adjustment',
+        delta,
+        unit: baseUnit,
+        source: 'Manual',
+        notes: v('afg-notes')
+      });
+    if (histErr) throw histErr;
+
+    closeModal('adjFG');
+    clearFields(['afg-qty','afg-notes']);
+    await refreshAll();
+    rerenderCurrentPage();
+    toast('Stock updated!','ok');
+  } catch (e) {
+    toast('Save failed: ' + (e?.message || e), 'err');
+  }
+}
+
+async function saveAdjRM(){
+  if (!supabaseClient) { toast('Not connected to Supabase.', 'err'); return; }
+  const date=v('arm-date'),material=v('arm-material'),type=v('arm-type'),qty=n(v('arm-qty'));
+  if(!date||!qty){toast('Fill all fields.','err');return;}
+
+  try{
+    const old = Number(DB.rm?.[material]?.qty || 0);
+    let next;
+    if (type === 'add') next = old + qty;
+    if (type === 'remove') next = Math.max(0, old - qty);
+    if (type === 'set') next = qty;
+    const delta = next - old;
+
+    const { error: updErr } = await supabaseClient.from('inventory_rm')
+      .upsert({ material, qty: next, unit: 'kg' }, { onConflict: 'material' });
+    if (updErr) throw updErr;
+
+    const { error: histErr } = await supabaseClient.from('inventory_rm_history')
+      .insert({
+        date,
+        material,
+        type: 'Adjustment',
+        delta,
+        source: 'Manual',
+        notes: v('arm-notes')
+      });
+    if (histErr) throw histErr;
+
+    closeModal('adjRM');
+    clearFields(['arm-qty','arm-notes']);
+    await refreshAll();
+    rerenderCurrentPage();
+    toast('Stock updated!','ok');
+  } catch (e) {
+    toast('Save failed: ' + (e?.message || e), 'err');
+  }
+}
+
+async function saveInward(){
+  if (!supabaseClient) { toast('Not connected to Supabase.', 'err'); return; }
+  const date=v('in-date'),material=v('in-material'),qty=n(v('in-qty'));
+  if(!date||!qty){toast('Fill Date and Quantity.','err');return;}
+
+  try{
+    const supplier = v('in-supplier');
+    const notes = v('in-notes');
+
+    // 1) Insert shipment record
+    const { error: insErr } = await supabaseClient.from('inward_shipments').insert({
+      date,
+      material,
+      qty,
+      supplier,
+      notes
+    });
+    if (insErr) throw insErr;
+
+    // 2) Update inventory + history
+    const old = Number(DB.rm?.[material]?.qty || 0);
+    const next = old + qty;
+    const delta = next - old;
+
+    const { error: rmUpdErr } = await supabaseClient.from('inventory_rm')
+      .upsert({ material, qty: next, unit: 'kg' }, { onConflict: 'material' });
+    if (rmUpdErr) throw rmUpdErr;
+
+    const { error: histErr } = await supabaseClient.from('inventory_rm_history')
+      .insert({
+        date,
+        material,
+        type: 'Inward',
+        delta,
+        source: supplier,
+        notes
+      });
+    if (histErr) throw histErr;
+
+    closeModal('inward');
+    clearFields(['in-qty','in-supplier','in-notes']);
+    await refreshAll();
+    rerenderCurrentPage();
+    toast('Shipment recorded!','ok');
+  } catch (e) {
+    toast('Save failed: ' + (e?.message || e), 'err');
+  }
+}
+
+async function saveOutward(){
+  if (!supabaseClient) { toast('Not connected to Supabase.', 'err'); return; }
+  const date=v('out-date'),product=v('out-product'),qty=n(v('out-qty'));
+  if(!date||!qty){toast('Fill Date and Quantity.','err');return;}
+
+  try{
+    const buyer = v('out-buyer');
+    const notes = v('out-notes');
+
+    // 1) Insert shipment record
+    const { error: insErr } = await supabaseClient.from('outward_shipments').insert({
+      date,
+      product,
+      qty,
+      buyer,
+      notes
+    });
+    if (insErr) throw insErr;
+
+    // 2) Update inventory + history (only on INSERT)
+    const baseUnit = product === 'Bio Oil' ? 'liter' : 'kg';
+    const old = Number(DB.fg?.[product]?.qty || 0);
+    const next = Math.max(0, old - qty);
+    const delta = next - old; // negative (or 0 if out of stock)
+
+    const { error: fgUpdErr } = await supabaseClient.from('inventory_fg')
+      .upsert({ product, qty: next, unit: baseUnit }, { onConflict: 'product' });
+    if (fgUpdErr) throw fgUpdErr;
+
+    const { error: histErr } = await supabaseClient.from('inventory_fg_history')
+      .insert({
+        date,
+        product,
+        type: 'Outward',
+        delta,
+        unit: baseUnit,
+        source: buyer,
+        notes
+      });
+    if (histErr) throw histErr;
+
+    closeModal('outward');
+    clearFields(['out-qty','out-buyer','out-notes']);
+    await refreshAll();
+    rerenderCurrentPage();
+    toast('Sale recorded!','ok');
+  } catch (e) {
+    toast('Save failed: ' + (e?.message || e), 'err');
+  }
+}
+
+// ========== INVENTORY HELPERS ==========
+function addFG(date,product,qty,unit,source,notes){
+  if(!DB.fg[product])DB.fg[product]={qty:0,unit};
+  DB.fg[product].qty+=qty;
+  DB.fgHistory.push({id:nid(),date,product,type:'Production',delta:qty,unit,source,notes});
+}
+function deductRM(date,material,qty,source){
+  if(!DB.rm[material])DB.rm[material]={qty:0,unit:'kg'};
+  const prev=DB.rm[material].qty;
+  DB.rm[material].qty=Math.max(0,prev-qty);
+  DB.rmHistory.push({id:nid(),date,material,type:'Consumed',delta:DB.rm[material].qty-prev,source,notes:'Used in production'});
+}
+function deductIngredient(date,ingr,qty,source){
+  if(ingr==='Briquette'){
+    if(!DB.fg[ingr])DB.fg[ingr]={qty:0,unit:'kg'};
+    const delta=-Math.min(DB.fg[ingr].qty,qty);
+    DB.fg[ingr].qty=Math.max(0,DB.fg[ingr].qty-qty);
+    DB.fgHistory.push({id:nid(),date,product:ingr,type:'Consumed',delta,unit:'kg',source,notes:'Main ingredient in pyrolysis'});
+  } else {
+    deductRM(date,ingr,qty,source);
+  }
+}
+
+// ========== INVENTORY RECOMPUTE ==========
+// The only correct way: recompute every stock total by summing all history deltas.
+// This means delete + recompute is always safe — no double-counting, no stale negatives.
+async function recomputeInventory() {
+  const [
+    { data: fgHist },
+    { data: rmHist }
+  ] = await Promise.all([
+    supabaseClient.from('inventory_fg_history').select('product,delta,unit'),
+    supabaseClient.from('inventory_rm_history').select('material,delta')
+  ]);
+
+  // FG totals
+  const fgTotals = {};
+  (fgHist||[]).forEach(r => {
+    fgTotals[r.product] = (fgTotals[r.product]||0) + Number(r.delta||0);
+  });
+  const fgUpserts = Object.entries(fgTotals).map(([product, qty]) => ({
+    product,
+    qty,
+    unit: DB.fg[product]?.unit || (product==='Bio Oil'?'liter':'kg')
+  }));
+  // Zero out products not in history
+  Object.keys(DB.fg).forEach(p => {
+    if (!(p in fgTotals)) fgUpserts.push({ product:p, qty:0, unit:DB.fg[p]?.unit||'kg' });
+  });
+  if (fgUpserts.length) {
+    for (const row of fgUpserts) {
+      await supabaseClient.from('inventory_fg').upsert(row, {onConflict:'product'});
+    }
+  }
+
+  // RM totals
+  const rmTotals = {};
+  (rmHist||[]).forEach(r => {
+    rmTotals[r.material] = (rmTotals[r.material]||0) + Number(r.delta||0);
+  });
+  const rmUpserts = Object.entries(rmTotals).map(([material, qty]) => ({
+    material, qty, unit: DB.rm[material]?.unit||'kg'
+  }));
+  Object.keys(DB.rm).forEach(m => {
+    if (!(m in rmTotals)) rmUpserts.push({ material:m, qty:0, unit:'kg' });
+  });
+  if (rmUpserts.length) {
+    for (const row of rmUpserts) {
+      await supabaseClient.from('inventory_rm').upsert(row, {onConflict:'material'});
+    }
+  }
+}
+
+// ========== DELETE ==========
+async function delProd(type,id){
+  if(!confirm('Delete this record? Inventory will be recalculated from remaining history.'))return;
+  try{
+    // Step 1: delete the production record
+    const tableMap={sawdust:'prod_sawdust',briquette:'prod_briquette',biochar:'prod_biochar'};
+    const { error } = await supabaseClient.from(tableMap[type]).delete().eq('id',id);
+    if(error) throw error;
+
+    // Step 2: delete fg/rm history rows created by this exact production record.
+    // We identify them by matching: type IN ('Production','Consumed') AND source IN ('Production','Biochar Production')
+    // The cleanest signal is that the source for production-created rows is always 'Production' or 'Biochar Production'.
+    // We delete ALL such auto-generated rows and then let recompute rebuild from whatever remains.
+    // (Manual adjustments, Inward, Outward entries are untouched because their source/type differ.)
+    const prodSources = ['Production','Biochar Production'];
+    const prodTypes   = ['Production','Consumed','Reversal (Delete)'];
+    await supabaseClient.from('inventory_fg_history')
+      .delete()
+      .in('source', prodSources)
+      .in('type', prodTypes);
+    await supabaseClient.from('inventory_rm_history')
+      .delete()
+      .in('source', prodSources)
+      .in('type', prodTypes);
+
+    // Step 3: re-insert history for ALL remaining production records so totals are correct
+    await refreshAll(); // reload DB from supabase (prod records now exclude deleted one)
+    // Re-create history entries from the fresh prod records
+    const fgIns=[], rmIns=[];
+    DB.prod.sawdust.forEach(r=>{
+      rmIns.push({date:r.date,material:r.ingr,type:'Consumed',delta:-(r.used||0),source:'Production',notes:''});
+      fgIns.push({date:r.date,product:'Sawdust',type:'Production',delta:r.mfg||0,unit:'kg',source:'Production',notes:''});
+      rmIns.push({date:r.date,material:'Sawdust',type:'Production',delta:r.mfg||0,source:'Production',notes:''});
+    });
+    DB.prod.briquette.forEach(r=>{
+      rmIns.push({date:r.date,material:r.ingr,type:'Consumed',delta:-(r.used||0),source:'Production',notes:''});
+      fgIns.push({date:r.date,product:'Briquette',type:'Production',delta:r.mfg||0,unit:'kg',source:'Production',notes:''});
+      rmIns.push({date:r.date,material:'Briquette',type:'Production',delta:r.mfg||0,source:'Production',notes:''});
+    });
+    DB.prod.biochar.forEach(r=>{
+      const consumeIngr=(ingr,qty)=>{
+        if(!ingr||!qty)return;
+        if(ingr==='Briquette'){
+          fgIns.push({date:r.date,product:'Briquette',type:'Consumed',delta:-qty,unit:'kg',source:'Biochar Production',notes:''});
+          rmIns.push({date:r.date,material:'Briquette',type:'Consumed',delta:-qty,source:'Biochar Production',notes:''});
+        } else {
+          rmIns.push({date:r.date,material:ingr,type:'Consumed',delta:-qty,source:'Biochar Production',notes:''});
+        }
+      };
+      consumeIngr(r.ingr1,r.qty1);
+      consumeIngr(r.ingr2,r.qty2);
+      if(r.fuelWV) rmIns.push({date:r.date,material:'Wood Veneer',type:'Consumed',delta:-r.fuelWV,source:'Biochar Production',notes:''});
+      if(r.fuelWP) rmIns.push({date:r.date,material:'Wood Pellet',type:'Consumed',delta:-r.fuelWP,source:'Biochar Production',notes:''});
+      if(r.fuelW)  rmIns.push({date:r.date,material:'Wood',type:'Consumed',delta:-r.fuelW,source:'Biochar Production',notes:''});
+      if(r.biochar) fgIns.push({date:r.date,product:'Biochar',type:'Production',delta:r.biochar,unit:'kg',source:'Biochar Production',notes:''});
+      if(r.biooil) fgIns.push({date:r.date,product:'Bio Oil',type:'Production',delta:r.biooil,unit:'liter',source:'Biochar Production',notes:''});
+      if(r.ash)    fgIns.push({date:r.date,product:'Ash',type:'Production',delta:r.ash,unit:'kg',source:'Biochar Production',notes:''});
+    });
+    if(fgIns.length) await supabaseClient.from('inventory_fg_history').insert(fgIns);
+    if(rmIns.length) await supabaseClient.from('inventory_rm_history').insert(rmIns);
+
+    // Step 4: recompute stock totals from ALL history (production + manual + inward + outward)
+    await recomputeInventory();
+    await refreshAll();
+    rerenderCurrentPage();
+    toast('Deleted and inventory recalculated.','ok');
+  } catch (e) {
+    toast('Delete failed: '+(e?.message||e),'err');
+  }
+}
+async function delTemperature(id){
+  if(!confirm('Delete this temperature session?'))return;
+  try{
+    const { error } = await supabaseClient.from('temperature_sessions').delete().eq('id', id);
+    if(error) throw error;
+    await refreshAll();
+    rerenderCurrentPage();
+    toast('Deleted.','ok');
+  } catch (e) {
+    toast('Delete failed: ' + (e?.message || e), 'err');
+  }
+}
+async function delPackaging(id){
+  if(!confirm('Delete this packaging batch?'))return;
+  try{
+    const { error } = await supabaseClient.from('packaging').delete().eq('id', id);
+    if(error) throw error;
+    await refreshAll();
+    rerenderCurrentPage();
+    toast('Deleted.','ok');
+  } catch (e) {
+    toast('Delete failed: ' + (e?.message || e), 'err');
+  }
+}
+async function delInward(id){
+  if(!confirm('Delete this shipment?'))return;
+  try{
+    const { error } = await supabaseClient.from('inward_shipments').delete().eq('id', id);
+    if(error) throw error;
+    await refreshAll();
+    rerenderCurrentPage();
+    toast('Deleted.','ok');
+  } catch (e) {
+    toast('Delete failed: ' + (e?.message || e), 'err');
+  }
+}
+async function delOutward(id){
+  if(!confirm('Delete this sale?'))return;
+  try{
+    const { error } = await supabaseClient.from('outward_shipments').delete().eq('id', id);
+    if(error) throw error;
+    await refreshAll();
+    rerenderCurrentPage();
+    toast('Deleted.','ok');
+  } catch (e) {
+    toast('Delete failed: ' + (e?.message || e), 'err');
+  }
+}
+
+// ========== CLEAR CATEGORY ==========
+async function clearCategory(cat) {
+  const labels = {
+    sawdust:'Sawdust Production Log',briquette:'Briquette Production Log',
+    biochar:'Biochar Production Log',temperature:'Temperature Sessions',
+    packaging:'Packaging Batches',inward:'Inward Shipments',
+    outward:'Outward Shipments (Sales)',invhistory:'Inventory History Logs',
+    all:'EVERYTHING (full reset)'
+  };
+  if(!confirm('This will permanently delete all ' + labels[cat] + ' records from Supabase.\n\nThis CANNOT be undone. Are you sure?')) return;
+
+  try {
+    const prodSources = ['Production','Biochar Production'];
+    const prodTypes   = ['Production','Consumed','Reversal (Delete)'];
+
+    if (cat === 'sawdust' || cat === 'all') {
+      await supabaseClient.from('prod_sawdust').delete().neq('id', 0);
+    }
+    if (cat === 'briquette' || cat === 'all') {
+      await supabaseClient.from('prod_briquette').delete().neq('id', 0);
+    }
+    if (cat === 'biochar' || cat === 'all') {
+      await supabaseClient.from('prod_biochar').delete().neq('id', 0);
+    }
+    // After any prod clear, wipe auto-generated history and rebuild
+    if (['sawdust','briquette','biochar','all'].includes(cat)) {
+      await supabaseClient.from('inventory_fg_history').delete().in('source', prodSources).in('type', prodTypes);
+      await supabaseClient.from('inventory_rm_history').delete().in('source', prodSources).in('type', prodTypes);
+      await refreshAll();
+      // Re-insert history from remaining production records
+      const fgIns=[], rmIns=[];
+      DB.prod.sawdust.forEach(r=>{
+        rmIns.push({date:r.date,material:r.ingr,type:'Consumed',delta:-(r.used||0),source:'Production',notes:''});
+        fgIns.push({date:r.date,product:'Sawdust',type:'Production',delta:r.mfg||0,unit:'kg',source:'Production',notes:''});
+        rmIns.push({date:r.date,material:'Sawdust',type:'Production',delta:r.mfg||0,source:'Production',notes:''});
+      });
+      DB.prod.briquette.forEach(r=>{
+        rmIns.push({date:r.date,material:r.ingr,type:'Consumed',delta:-(r.used||0),source:'Production',notes:''});
+        fgIns.push({date:r.date,product:'Briquette',type:'Production',delta:r.mfg||0,unit:'kg',source:'Production',notes:''});
+        rmIns.push({date:r.date,material:'Briquette',type:'Production',delta:r.mfg||0,source:'Production',notes:''});
+      });
+      DB.prod.biochar.forEach(r=>{
+        const consumeIngr=(ingr,qty)=>{
+          if(!ingr||!qty)return;
+          if(ingr==='Briquette'){
+            fgIns.push({date:r.date,product:'Briquette',type:'Consumed',delta:-qty,unit:'kg',source:'Biochar Production',notes:''});
+            rmIns.push({date:r.date,material:'Briquette',type:'Consumed',delta:-qty,source:'Biochar Production',notes:''});
+          } else {
+            rmIns.push({date:r.date,material:ingr,type:'Consumed',delta:-qty,source:'Biochar Production',notes:''});
+          }
+        };
+        consumeIngr(r.ingr1,r.qty1); consumeIngr(r.ingr2,r.qty2);
+        if(r.fuelWV) rmIns.push({date:r.date,material:'Wood Veneer',type:'Consumed',delta:-r.fuelWV,source:'Biochar Production',notes:''});
+        if(r.fuelWP) rmIns.push({date:r.date,material:'Wood Pellet',type:'Consumed',delta:-r.fuelWP,source:'Biochar Production',notes:''});
+        if(r.fuelW)  rmIns.push({date:r.date,material:'Wood',type:'Consumed',delta:-r.fuelW,source:'Biochar Production',notes:''});
+        if(r.biochar) fgIns.push({date:r.date,product:'Biochar',type:'Production',delta:r.biochar,unit:'kg',source:'Biochar Production',notes:''});
+        if(r.biooil) fgIns.push({date:r.date,product:'Bio Oil',type:'Production',delta:r.biooil,unit:'liter',source:'Biochar Production',notes:''});
+        if(r.ash)    fgIns.push({date:r.date,product:'Ash',type:'Production',delta:r.ash,unit:'kg',source:'Biochar Production',notes:''});
+      });
+      if(fgIns.length) await supabaseClient.from('inventory_fg_history').insert(fgIns);
+      if(rmIns.length) await supabaseClient.from('inventory_rm_history').insert(rmIns);
+      await recomputeInventory();
+    }
+    if (cat === 'temperature') {
+      await supabaseClient.from('temperature_sessions').delete().neq('id', 0);
+    }
+    if (cat === 'packaging' || cat === 'all') {
+      await supabaseClient.from('packaging').delete().neq('id', 0);
+      await supabaseClient.from('sack_history').delete().neq('id', 0);
+    }
+    if (cat === 'inward' || cat === 'all') {
+      await supabaseClient.from('inward_shipments').delete().neq('id', 0);
+    }
+    if (cat === 'outward' || cat === 'all') {
+      await supabaseClient.from('outward_shipments').delete().neq('id', 0);
+    }
+    if (cat === 'invhistory' || cat === 'all') {
+      await supabaseClient.from('inventory_fg_history').delete().neq('id', 0);
+      await supabaseClient.from('inventory_rm_history').delete().neq('id', 0);
+    }
+    if (cat === 'all') {
+      await supabaseClient.from('temperature_sessions').delete().neq('id', 0);
+      // Zero out all stock levels
+      for (const product of Object.keys(DB.fg)) {
+        await supabaseClient.from('inventory_fg').upsert({product, qty:0, unit:DB.fg[product]?.unit||'kg'},{onConflict:'product'});
+      }
+      for (const material of Object.keys(DB.rm)) {
+        await supabaseClient.from('inventory_rm').upsert({material, qty:0, unit:'kg'},{onConflict:'material'});
+      }
+      await supabaseClient.from('sacks').upsert({type:'sack',qty:0},{onConflict:'type'});
+      await supabaseClient.from('sacks').upsert({type:'innerSack',qty:0},{onConflict:'type'});
+    }
+    await refreshAll();
+    rerenderCurrentPage();
+    closeModal('settings');
+    toast('Cleared: ' + labels[cat], 'ok');
+  } catch(e) {
+    toast('Clear failed: ' + (e?.message||e), 'err');
+  }
+}
+
+// ========== PDF ==========
+async function exportPDF(){
+  toast('Generating PDF...','ok');
+  try{
+    const {jsPDF}=window.jspdf;
+    const doc=new jsPDF({orientation:'portrait',unit:'mm',format:'a4'});
+    const W=210,M=14;
+    doc.setFont('helvetica','bold');doc.setFontSize(18);doc.setTextColor(30,30,30);
+    doc.text('Neutura — Probolinggo Plant',M,20);
+    doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(100,100,100);
+    doc.text('Production Report — Generated: '+new Date().toLocaleString(),M,28);
+    doc.line(M,31,W-M,31);
+    let y=40;
+    const hdr=(t)=>{if(y>265){doc.addPage();y=20;}doc.setFont('helvetica','bold');doc.setFontSize(12);doc.setTextColor(30,30,30);doc.text(t,M,y);y+=7;};
+    const row=(cols,ws)=>{if(y>278){doc.addPage();y=20;}let x=M;doc.setFont('helvetica','normal');doc.setFontSize(8);doc.setTextColor(50,50,50);cols.forEach((c,i)=>{doc.text(String(c||'—').substring(0,Math.floor(ws[i]/1.9)),x,y);x+=ws[i];});y+=5;};
+    hdr('Finished Goods Inventory');
+    Object.keys(DB.fg).forEach(p=>{doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(p+': '+fmt(DB.fg[p].qty)+' '+DB.fg[p].unit,M+4,y);y+=6;});
+    y+=3;doc.line(M,y,W-M,y);y+=6;
+    hdr('Raw Materials Inventory');
+    Object.keys(DB.rm).forEach(p=>{doc.setFont('helvetica','normal');doc.setFontSize(9);doc.text(p+': '+fmt(DB.rm[p].qty)+' kg',M+4,y);y+=6;});
+    y+=3;doc.line(M,y,W-M,y);y+=6;
+    hdr('Sawdust Production');
+    DB.prod.sawdust.slice(0,25).forEach(r=>row([fmtDate(r.date),r.ingr,fmt(r.amount),fmt(r.surplus),fmt(r.used),fmt(r.mfg)+'kg'],[28,30,24,24,24,28]));
+    y+=3;doc.line(M,y,W-M,y);y+=6;
+    hdr('Briquette Production');
+    DB.prod.briquette.slice(0,25).forEach(r=>row([fmtDate(r.date),r.ingr,fmt(r.amount),fmt(r.surplus),fmt(r.used),fmt(r.mfg)+'kg'],[28,30,24,24,24,28]));
+    y+=3;doc.line(M,y,W-M,y);y+=6;
+    hdr('Biochar Production');
+    DB.prod.biochar.slice(0,20).forEach(r=>row([fmtDate(r.date),r.reactor,r.ingr1,fmt(r.qty1),r.ingr2||'—',fmt(r.biochar)+'kg',fmt(r.biooil)+'L'],[22,22,26,18,26,22,22]));
+    y+=3;doc.line(M,y,W-M,y);y+=6;
+    hdr('Temperature Sessions');
+    DB.temperature.slice(0,20).forEach(s=>{
+      const peak=s.temps.filter(t=>t!=null).length?Math.max(...s.temps.filter(t=>t!=null)):0;
+      row([fmtDate(s.date),s.reactor,'Peak: '+peak+'C','Res: '+s.residenceTime.toFixed(1)+'h'],[28,26,40,50]);
+    });
+    y+=3;doc.line(M,y,W-M,y);y+=6;
+    hdr('Packaging Batches');
+    DB.packaging.slice(0,25).forEach(r=>row([fmtDate(r.date),fmt(r.netWeight)+'kg/sack',fmt(r.count)+' sacks',fmt(r.totalWeight)+' kg'],[30,36,34,36]));
+    doc.save('neutura-report-'+todayStr()+'.pdf');
+    toast('PDF saved!','ok');
+  }catch(e){toast('PDF error: '+e.message,'err');}
+}
+
+// ========== BACKUP ==========
+function exportJSON(){
+  const b=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});
+  const a=document.createElement('a');a.href=URL.createObjectURL(b);
+  a.download='neutura-backup-'+todayStr()+'.json';a.click();
+  toast('Backup downloaded!','ok');
+}
+function importJSON(e){
+  // Import/restore is intentionally disabled for now because this app now uses Supabase
+  // as the single source of truth (multi-user).
+  const file=e.target.files[0];
+  e.target.value='';
+  if(!file) return;
+  toast('Restore backup from JSON is not supported yet with Supabase. Use Supabase SQL/import.', 'err');
+}
+
+// ========== UTILS ==========
+function v(id){return(document.getElementById(id)?.value||'').trim();}
+function n(val){return parseFloat(val)||0;}
+function nid(){return Date.now()+Math.floor(Math.random()*9999);}
+function todayStr(){return new Date().toISOString().split('T')[0];}
+function thisMonth(){return todayStr().substring(0,7);}
+function weekStart(){const d=new Date(),day=d.getDay(),diff=d.getDate()-day+(day===0?-6:1);const m=new Date(d);m.setDate(diff);return m.toISOString().split('T')[0];}
+function fmt(n){return parseFloat(n||0).toLocaleString('en-ID',{maximumFractionDigits:2});}
+function fmtDate(s){if(!s)return'—';const d=new Date(s+'T00:00:00');return d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'2-digit'});}
+function clearFields(ids){ids.forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});}
+function clearProdForm(tab){
+  const flds={sawdust:['sd-amount','sd-surplus','sd-used','sd-mfg','sd-notes'],briquette:['br-amount','br-surplus','br-used','br-mfg','br-notes'],biochar:['bc-qty1','bc-qty2','bc-total-ingr','bc-fuel-wv','bc-fuel-wp','bc-fuel-w','bc-ash','bc-biochar','bc-biooil','bc-notes']};
+  clearFields(flds[tab]||[]);
+}
+function emptyRow(cols,msg){return `<tr><td colspan="${cols}"><div class="empty-state"><div class="empty-icon">&#x1F4CB;</div><p>${msg}</p></div></td></tr>`;}
+let _tt;
+function toast(msg,type='ok'){const el=document.getElementById('toast');el.textContent=msg;el.className='show '+type;clearTimeout(_tt);_tt=setTimeout(()=>{el.className='';},3200);}
+
+
+
+// ========== CHARTS ==========
+let charts = {};
+let dashPeriod = 'daily';
+let dashAnchor = null; // null = today
+
+function setDashPeriod(p, btn) {
+  dashPeriod = p;
+  document.querySelectorAll('#dash-period-bar .tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  renderCharts();
+}
+
+function setDashAnchor(val) {
+  dashAnchor = val || null;
+  renderCharts();
+}
+
+function resetDashAnchor() {
+  dashAnchor = null;
+  const inp = document.getElementById('dash-anchor-input');
+  if (inp) inp.value = '';
+  renderCharts();
+}
+
+function getAnchorDate() {
+  if (dashAnchor) return new Date(dashAnchor + 'T00:00:00');
+  return new Date();
+}
+
+function getPeriodKeys(period) {
+  const anchor = getAnchorDate();
+  const keys = [];
+  if (period === 'daily') {
+    // 14 days ending at anchor
+    for (let i = 13; i >= 0; i--) {
+      const d = new Date(anchor); d.setDate(d.getDate() - i);
+      keys.push(d.toISOString().split('T')[0]);
+    }
+  } else if (period === 'weekly') {
+    // 12 weeks ending at the week containing anchor
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(anchor); d.setDate(d.getDate() - i * 7);
+      const day = d.getDay(), diff = d.getDate() - day + (day === 0 ? -6 : 1);
+      const mon = new Date(d); mon.setDate(diff);
+      keys.push(mon.toISOString().split('T')[0]);
+    }
+  } else if (period === 'monthly') {
+    // 12 months ending at anchor month
+    for (let i = 11; i >= 0; i--) {
+      const d = new Date(anchor.getFullYear(), anchor.getMonth() - i, 1);
+      keys.push(d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0'));
+    }
+  } else {
+    // 5 years ending at anchor year
+    const y = anchor.getFullYear();
+    for (let i = 4; i >= 0; i--) {
+      keys.push(String(y - i));
+    }
+  }
+  return [...new Set(keys)];
+}
+
+function labelFor(key, period) {
+  if (period === 'daily') {
+    const d = new Date(key + 'T00:00:00');
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  }
+  if (period === 'weekly') return 'W/' + key.slice(8);
+  if (period === 'monthly') {
+    const [y, m] = key.split('-');
+    return new Date(+y, +m - 1, 1).toLocaleDateString('en-GB', { month: 'short', year: '2-digit' });
+  }
+  return key;
+}
+
+function matchKey(date, key, period) {
+  if (period === 'daily') return date === key;
+  if (period === 'weekly') {
+    const d = new Date(date + 'T00:00:00');
+    const day = d.getDay(), diff = d.getDate() - day + (day === 0 ? -6 : 1);
+    const mon = new Date(d); mon.setDate(diff);
+    return mon.toISOString().split('T')[0] === key;
+  }
+  if (period === 'monthly') return date.startsWith(key);
+  return date.startsWith(key);
+}
+
+function destroyChart(id) {
+  if (charts[id]) { charts[id].destroy(); delete charts[id]; }
+}
+
+function renderCharts() {
+  const keys = getPeriodKeys(dashPeriod);
+  const labels = keys.map(k => labelFor(k, dashPeriod));
+
+  // --- Chart 1: Production ---
+  const prodColors = { Sawdust: '#5b8dee', Briquette: '#e8a838', Biochar: '#3ecf8e', 'Bio Oil': '#e05c3a' };
+  const prodSets = [
+    { label: 'Sawdust', data: keys.map(k => DB.prod.sawdust.filter(r => matchKey(r.date, k, dashPeriod)).reduce((s, r) => s + n(r.mfg), 0)), backgroundColor: '#5b8dee99', borderColor: '#5b8dee', borderWidth: 2 },
+    { label: 'Briquette', data: keys.map(k => DB.prod.briquette.filter(r => matchKey(r.date, k, dashPeriod)).reduce((s, r) => s + n(r.mfg), 0)), backgroundColor: '#e8a83899', borderColor: '#e8a838', borderWidth: 2 },
+    { label: 'Biochar', data: keys.map(k => DB.prod.biochar.filter(r => matchKey(r.date, k, dashPeriod)).reduce((s, r) => s + n(r.biochar), 0)), backgroundColor: '#3ecf8e99', borderColor: '#3ecf8e', borderWidth: 2 },
+    { label: 'Bio Oil', data: keys.map(k => DB.prod.biochar.filter(r => matchKey(r.date, k, dashPeriod)).reduce((s, r) => s + n(r.biooil), 0)), backgroundColor: '#e05c3a99', borderColor: '#e05c3a', borderWidth: 2 },
+  ];
+  destroyChart('production');
+  charts['production'] = new Chart(document.getElementById('chart-production'), {
+    type: 'bar',
+    data: { labels, datasets: prodSets },
+    options: chartOpts('kg')
+  });
+
+  // --- Chart 2: Temperature ---
+  const tempSessions = [...DB.temperature].sort((a, b) => a.date.localeCompare(b.date));
+  const tempGrouped = {};
+  keys.forEach(k => { tempGrouped[k] = []; });
+  tempSessions.forEach(s => {
+    const k = keys.find(k => matchKey(s.date, k, dashPeriod));
+    if (k) {
+      const peak = s.temps.filter(t => t != null);
+      if (peak.length) tempGrouped[k].push(Math.max(...peak));
+    }
+  });
+  const tempData = keys.map(k => tempGrouped[k].length ? (tempGrouped[k].reduce((a, b) => a + b, 0) / tempGrouped[k].length).toFixed(1) : null);
+  destroyChart('temperature');
+  charts['temperature'] = new Chart(document.getElementById('chart-temperature'), {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Avg Peak Temp (°C)', data: tempData, borderColor: '#e05c3a', backgroundColor: 'rgba(224,92,58,0.1)', borderWidth: 2, tension: 0.4, fill: true, pointBackgroundColor: '#e05c3a', spanGaps: true },
+        { label: '350°C threshold', data: keys.map(() => 350), borderColor: '#e8a83860', borderWidth: 1, borderDash: [5, 5], pointRadius: 0, fill: false }
+      ]
+    },
+    options: chartOpts('°C')
+  });
+
+  // --- Chart 3: Packaged Sacks ---
+  const pkgData = keys.map(k => DB.packaging.filter(r => matchKey(r.date, k, dashPeriod)).reduce((s, r) => s + n(r.count), 0));
+  const pkgWeight = keys.map(k => DB.packaging.filter(r => matchKey(r.date, k, dashPeriod)).reduce((s, r) => s + n(r.totalWeight), 0));
+  destroyChart('packaging');
+  charts['packaging'] = new Chart(document.getElementById('chart-packaging'), {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        { label: 'Sacks Packaged', data: pkgData, backgroundColor: '#5b8dee99', borderColor: '#5b8dee', borderWidth: 2, yAxisID: 'y' },
+        { label: 'Total Weight (kg)', data: pkgWeight, backgroundColor: '#3ecf8e55', borderColor: '#3ecf8e', borderWidth: 2, type: 'line', yAxisID: 'y1', tension: 0.4, fill: false }
+      ]
+    },
+    options: {
+      ...chartBase(),
+      scales: {
+        x: chartXAxis(),
+        y: { ...chartYAxis(), position: 'left', title: { display: true, text: 'Sacks', color: '#6b7280', font: { size: 10 } } },
+        y1: { ...chartYAxis(), position: 'right', grid: { drawOnChartArea: false }, title: { display: true, text: 'kg', color: '#6b7280', font: { size: 10 } } }
+      }
+    }
+  });
+
+  // --- Chart 4: Stock Levels (horizontal bar) ---
+  const fgKeys = Object.keys(DB.fg);
+  const fgVals = fgKeys.map(k => DB.fg[k].qty);
+  const fgColorsArr = ['#5b8dee', '#e8a838', '#3ecf8e', '#e05c3a', '#6b7280'];
+  destroyChart('stocks');
+  charts['stocks'] = new Chart(document.getElementById('chart-stocks'), {
+    type: 'bar',
+    data: {
+      labels: fgKeys,
+      datasets: [{ label: 'Stock', data: fgVals, backgroundColor: fgColorsArr.map(c => c + '99'), borderColor: fgColorsArr, borderWidth: 2, borderRadius: 6 }]
+    },
+    options: {
+      ...chartBase(),
+      indexAxis: 'y',
+      scales: {
+        x: { ...chartYAxis(), title: { display: false } },
+        y: { ...chartXAxis() }
+      },
+      plugins: { ...chartBase().plugins, legend: { display: false } }
+    }
+  });
+}
+
+function chartBase() {
+  return {
+    responsive: true,
+    maintainAspectRatio: true,
+    animation: { duration: 400 },
+    plugins: {
+      legend: { labels: { color: '#9ca3af', font: { size: 10, family: "'DM Mono', monospace" }, boxWidth: 12, padding: 10 } },
+      tooltip: { backgroundColor: '#1f2329', titleColor: '#ecedf0', bodyColor: '#9ca3af', borderColor: '#2a2f38', borderWidth: 1 }
+    }
+  };
+}
+function chartXAxis() {
+  return { grid: { color: '#2a2f3840' }, ticks: { color: '#6b7280', font: { size: 9 }, maxRotation: 45 } };
+}
+function chartYAxis() {
+  return { grid: { color: '#2a2f3840' }, ticks: { color: '#6b7280', font: { size: 9 } } };
+}
+function chartOpts(unit) {
+  return { ...chartBase(), scales: { x: chartXAxis(), y: { ...chartYAxis(), title: { display: true, text: unit, color: '#6b7280', font: { size: 10 } } } } };
+}
+
+// ========== INIT ==========
+buildTempInputs();
+setAuthScreen(false);
+// Set anchor input to today's date as default
+(function(){
+  const inp=document.getElementById('dash-anchor-input');
+  if(inp)inp.value=new Date().toISOString().split('T')[0];
+})();
+initSupabase();
+</script>
+</body>
+</html>

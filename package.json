@@ -1,0 +1,26 @@
+{
+    "name": "neutura",
+    "version": "1.0.0",
+    "description": "Neutura Probolinggo Plant — Production Tracker",
+    "main": "main.js",
+    "scripts": {
+        "start": "electron .",
+        "build": "electron-builder --win --x64"
+    },
+    "build": {
+        "appId": "com.neutura.plant",
+        "productName": "Neutura",
+        "win": {
+            "target": "nsis",
+            "icon": "icon.ico"
+        },
+        "files": [
+            "neutura-tracker.html",
+            "main.js"
+        ]
+    },
+    "devDependencies": {
+        "electron": "^41.0.3",
+        "electron-builder": "^26.8.1"
+    }
+}

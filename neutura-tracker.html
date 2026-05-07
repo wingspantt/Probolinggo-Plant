@@ -1907,6 +1907,7 @@ async function saveBiochar(){
 }
 
 async function saveTemperature(){
+  if (!supabaseClient) { toast('Not connected to Supabase.', 'err'); return; }
   const date=v('tm-date'),reactor=v('tm-reactor');
   if(!date){toast('Select a date.','err');return;}
   const temps=[];
@@ -2220,29 +2221,6 @@ async function saveOutward(){
   }
 }
 
-// ========== INVENTORY HELPERS ==========
-function addFG(date,product,qty,unit,source,notes){
-  if(!DB.fg[product])DB.fg[product]={qty:0,unit};
-  DB.fg[product].qty+=qty;
-  DB.fgHistory.push({id:nid(),date,product,type:'Production',delta:qty,unit,source,notes});
-}
-function deductRM(date,material,qty,source){
-  if(!DB.rm[material])DB.rm[material]={qty:0,unit:'kg'};
-  const prev=DB.rm[material].qty;
-  DB.rm[material].qty=Math.max(0,prev-qty);
-  DB.rmHistory.push({id:nid(),date,material,type:'Consumed',delta:DB.rm[material].qty-prev,source,notes:'Used in production'});
-}
-function deductIngredient(date,ingr,qty,source){
-  if(ingr==='Briquette'){
-    if(!DB.fg[ingr])DB.fg[ingr]={qty:0,unit:'kg'};
-    const delta=-Math.min(DB.fg[ingr].qty,qty);
-    DB.fg[ingr].qty=Math.max(0,DB.fg[ingr].qty-qty);
-    DB.fgHistory.push({id:nid(),date,product:ingr,type:'Consumed',delta,unit:'kg',source,notes:'Main ingredient in pyrolysis'});
-  } else {
-    deductRM(date,ingr,qty,source);
-  }
-}
-
 // ========== INVENTORY RECOMPUTE ==========
 // The only correct way: recompute every stock total by summing all history deltas.
 // This means delete + recompute is always safe — no double-counting, no stale negatives.
@@ -2385,25 +2363,62 @@ async function delPackaging(id){
   }
 }
 async function delInward(id){
-  if(!confirm('Delete this shipment?'))return;
+  if(!confirm('Delete this shipment? Raw material inventory will be recalculated.'))return;
   try{
+    // Step 1: delete the inward shipment record
     const { error } = await supabaseClient.from('inward_shipments').delete().eq('id', id);
     if(error) throw error;
+
+    // Step 2: wipe all inward-type RM history entries
+    await supabaseClient.from('inventory_rm_history').delete().eq('type','Inward');
+
+    // Step 3: reload fresh data (deleted record is now gone)
+    await refreshAll();
+
+    // Step 4: re-insert RM history from all remaining inward shipments
+    const rmIns = DB.inward.map(r => ({
+      date: r.date, material: r.material, type: 'Inward',
+      delta: r.qty, source: r.supplier, notes: r.notes
+    }));
+    if(rmIns.length) await supabaseClient.from('inventory_rm_history').insert(rmIns);
+
+    // Step 5: recompute stock totals from all history
+    await recomputeInventory();
     await refreshAll();
     rerenderCurrentPage();
-    toast('Deleted.','ok');
+    toast('Deleted and inventory recalculated.','ok');
   } catch (e) {
     toast('Delete failed: ' + (e?.message || e), 'err');
   }
 }
 async function delOutward(id){
-  if(!confirm('Delete this sale?'))return;
+  if(!confirm('Delete this sale? Finished goods inventory will be recalculated.'))return;
   try{
+    // Step 1: delete the outward shipment record
     const { error } = await supabaseClient.from('outward_shipments').delete().eq('id', id);
     if(error) throw error;
+
+    // Step 2: wipe all outward-type FG history entries
+    await supabaseClient.from('inventory_fg_history').delete().eq('type','Outward');
+
+    // Step 3: reload fresh data (deleted record is now gone)
+    await refreshAll();
+
+    // Step 4: re-insert FG history from all remaining outward shipments
+    const fgIns = DB.outward.map(r => {
+      const baseUnit = r.product === 'Bio Oil' ? 'liter' : 'kg';
+      return {
+        date: r.date, product: r.product, type: 'Outward',
+        delta: -r.qty, unit: baseUnit, source: r.buyer, notes: r.notes
+      };
+    });
+    if(fgIns.length) await supabaseClient.from('inventory_fg_history').insert(fgIns);
+
+    // Step 5: recompute stock totals from all history
+    await recomputeInventory();
     await refreshAll();
     rerenderCurrentPage();
-    toast('Deleted.','ok');
+    toast('Deleted and inventory recalculated.','ok');
   } catch (e) {
     toast('Delete failed: ' + (e?.message || e), 'err');
   }

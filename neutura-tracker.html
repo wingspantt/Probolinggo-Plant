@@ -298,6 +298,7 @@ tr:hover td{background:rgba(31,35,41,0.5);}
     </div>
     <div id="prod-add-btn"></div>
   </div>
+  <div id="prod-stats" class="stats-grid" style="margin-bottom:18px;"></div>
   <div id="prod-sawdust">
     <div class="card">
       <div class="card-title"><span class="dot dot-blue"></span>Sawdust Production Records</div>
@@ -1268,7 +1269,84 @@ function renderProd(){
   renderProdTables();
 }
 
+function renderProdStats(){
+  const el=document.getElementById('prod-stats');
+  if(!el)return;
+  if(prodTab==='sawdust'){
+    const recs=filterPeriod(DB.prod.sawdust);
+    const count=recs.length;
+    const totalMfg=recs.reduce((s,r)=>s+n(r.mfg),0);
+    const totalUsed=recs.reduce((s,r)=>s+n(r.used),0);
+    const avgMfg=count?totalMfg/count:0;
+    el.innerHTML=`
+      <div class="stat-card c-blue"><div class="stat-bar"></div>
+        <div class="stat-label">Batches</div>
+        <div class="stat-value">${count}<span class="stat-unit">logs</span></div>
+        <div class="stat-sub">In selected period</div></div>
+      <div class="stat-card c-green"><div class="stat-bar"></div>
+        <div class="stat-label">Total Manufactured</div>
+        <div class="stat-value">${fmt(totalMfg)}<span class="stat-unit">kg</span></div>
+        <div class="stat-sub">Sawdust output</div></div>
+      <div class="stat-card c-amber"><div class="stat-bar"></div>
+        <div class="stat-label">Total Ingr. Used</div>
+        <div class="stat-value">${fmt(totalUsed)}<span class="stat-unit">kg</span></div>
+        <div class="stat-sub">Raw materials consumed</div></div>
+      <div class="stat-card c-gray"><div class="stat-bar"></div>
+        <div class="stat-label">Avg per Batch</div>
+        <div class="stat-value">${fmt(avgMfg)}<span class="stat-unit">kg</span></div>
+        <div class="stat-sub">Output per batch</div></div>`;
+  } else if(prodTab==='briquette'){
+    const recs=filterPeriod(DB.prod.briquette);
+    const count=recs.length;
+    const totalMfg=recs.reduce((s,r)=>s+n(r.mfg),0);
+    const totalUsed=recs.reduce((s,r)=>s+n(r.used),0);
+    const avgMfg=count?totalMfg/count:0;
+    el.innerHTML=`
+      <div class="stat-card c-amber"><div class="stat-bar"></div>
+        <div class="stat-label">Batches</div>
+        <div class="stat-value">${count}<span class="stat-unit">logs</span></div>
+        <div class="stat-sub">In selected period</div></div>
+      <div class="stat-card c-green"><div class="stat-bar"></div>
+        <div class="stat-label">Total Manufactured</div>
+        <div class="stat-value">${fmt(totalMfg)}<span class="stat-unit">kg</span></div>
+        <div class="stat-sub">Briquette output</div></div>
+      <div class="stat-card c-blue"><div class="stat-bar"></div>
+        <div class="stat-label">Total Ingr. Used</div>
+        <div class="stat-value">${fmt(totalUsed)}<span class="stat-unit">kg</span></div>
+        <div class="stat-sub">Raw materials consumed</div></div>
+      <div class="stat-card c-gray"><div class="stat-bar"></div>
+        <div class="stat-label">Avg per Batch</div>
+        <div class="stat-value">${fmt(avgMfg)}<span class="stat-unit">kg</span></div>
+        <div class="stat-sub">Output per batch</div></div>`;
+  } else if(prodTab==='biochar'){
+    const recs=filterPeriod(DB.prod.biochar);
+    const count=recs.length;
+    const totalBiochar=recs.reduce((s,r)=>s+n(r.biochar),0);
+    const totalBiooil=recs.reduce((s,r)=>s+n(r.biooil),0);
+    const totalIngr=recs.reduce((s,r)=>s+n(r.totalIngr),0);
+    const yieldPct=totalIngr?(totalBiochar/totalIngr*100):0;
+    el.innerHTML=`
+      <div class="stat-card c-green"><div class="stat-bar"></div>
+        <div class="stat-label">Batches</div>
+        <div class="stat-value">${count}<span class="stat-unit">logs</span></div>
+        <div class="stat-sub">In selected period</div></div>
+      <div class="stat-card c-amber"><div class="stat-bar"></div>
+        <div class="stat-label">Total Biochar</div>
+        <div class="stat-value">${fmt(totalBiochar)}<span class="stat-unit">kg</span></div>
+        <div class="stat-sub">Pyrolysis output</div></div>
+      <div class="stat-card c-red"><div class="stat-bar"></div>
+        <div class="stat-label">Total Bio Oil</div>
+        <div class="stat-value">${fmt(totalBiooil)}<span class="stat-unit">L</span></div>
+        <div class="stat-sub">Liquid byproduct</div></div>
+      <div class="stat-card c-blue"><div class="stat-bar"></div>
+        <div class="stat-label">Avg Yield</div>
+        <div class="stat-value">${yieldPct.toFixed(1)}<span class="stat-unit">%</span></div>
+        <div class="stat-sub">Biochar / total ingr.</div></div>`;
+  }
+}
+
 function renderProdTables(){
+  renderProdStats();
   const sd=filterPeriod([...DB.prod.sawdust].sort((a,b)=>b.date.localeCompare(a.date)));
   document.getElementById('tbl-sawdust').innerHTML=sd.length
     ?sd.map(r=>`<tr>
@@ -1471,9 +1549,10 @@ function renderOutward(){
   const cls=['c-blue','c-amber','c-green','c-red','c-gray'];
   document.getElementById('outward-stats').innerHTML=prods.map((p,i)=>{
     const total=DB.outward.filter(r=>r.product===p).reduce((s,r)=>s+n(r.qty),0);
+    const unit=DB.fg[p]?.unit||'kg';
     return `<div class="stat-card ${cls[i]||'c-gray'}"><div class="stat-bar"></div>
       <div class="stat-label">${p} Sold</div>
-      <div class="stat-value">${fmt(total)}<span class="stat-unit">kg</span></div>
+      <div class="stat-value">${fmt(total)}<span class="stat-unit">${unit}</span></div>
     </div>`;
   }).join('');
   const recs=[...DB.outward].sort((a,b)=>b.date.localeCompare(a.date));
